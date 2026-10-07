@@ -1,0 +1,5 @@
+# Closed-loop evaluation only (sim/). Never imported by src/, so the runtime
+# vision pipeline keeps its OpenCV + Ultralytics + NumPy + Matplotlib stack.
+-r requirements.txt
+eclipse-sumo==1.27.1
+libsumo==1.27.1

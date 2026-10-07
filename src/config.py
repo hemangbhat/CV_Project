@@ -176,6 +176,10 @@ class Config:
     # stopped vehicles that starts at the stop line (consecutive stopped vehicles no
     # more than this axis fraction apart), so an isolated stopped box far upstream
     # cannot set the reach. 0 keeps the legacy "furthest stopped vehicle" reach.
+    # Passage time for E6 gap-out: the Queue_Region must stay empty this long before a
+    # green is ended early. 0 keeps the legacy rule (end on the first empty frame), which
+    # gaps out mid-discharge whenever moving vehicles happen to leave a gap in the region.
+    gap_out_seconds: float = 0.0            # >= 0
     stopped_window_seconds: float = 0.0     # >= 0, 0 = legacy per-frame test
     stopped_speed_ratio: float = 0.2        # > 0, box heights per second
     queue_tail_gap: float = 0.0             # 0..1, 0 = legacy max reach
@@ -441,6 +445,7 @@ def from_json_obj(obj: Mapping[str, Any]) -> Config:
         use_spillback_risk=_optional_bool(obj, "use_spillback_risk", False),
         spillback_risk_weight=_optional_float(obj, "spillback_risk_weight", 0.0),
         risk_horizon_seconds=_optional_float(obj, "risk_horizon_seconds", 5.0),
+        gap_out_seconds=_optional_float(obj, "gap_out_seconds", 0.0),
         stopped_window_seconds=_optional_float(obj, "stopped_window_seconds", 0.0),
         stopped_speed_ratio=_optional_float(obj, "stopped_speed_ratio", 0.2),
         queue_tail_gap=_optional_float(obj, "queue_tail_gap", 0.0),
@@ -489,6 +494,7 @@ def to_json_obj(config: Config) -> dict[str, Any]:
         "use_spillback_risk": config.use_spillback_risk,
         "spillback_risk_weight": config.spillback_risk_weight,
         "risk_horizon_seconds": config.risk_horizon_seconds,
+        "gap_out_seconds": config.gap_out_seconds,
         "stopped_window_seconds": config.stopped_window_seconds,
         "stopped_speed_ratio": config.stopped_speed_ratio,
         "queue_tail_gap": config.queue_tail_gap,
@@ -725,6 +731,16 @@ def _validate(config: Config) -> None:
 
     _check_positive(config.stopped_displacement, "stopped_displacement")
     _check_positive(config.stopped_speed_ratio, "stopped_speed_ratio")
+    if (
+        isinstance(config.gap_out_seconds, bool)
+        or not isinstance(config.gap_out_seconds, (int, float))
+        or not math.isfinite(config.gap_out_seconds)
+        or config.gap_out_seconds < 0.0
+    ):
+        raise ConfigError(
+            f"configuration field 'gap_out_seconds' must be a finite number >= 0, "
+            f"got {config.gap_out_seconds!r}"
+        )
     _check_in_unit_range(config.queue_tail_gap, "queue_tail_gap")
     if (
         isinstance(config.stopped_window_seconds, bool)
