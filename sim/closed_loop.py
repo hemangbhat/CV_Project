@@ -174,6 +174,7 @@ class RunResult:
     approach_delay: dict[str, float]
     timing: str = "bands"
     norm: str = "physical"
+    green_sequence: str = ""   # approach initials of every green, for decision analysis
 
     def as_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -296,6 +297,9 @@ def run(
         traci.close()
 
     tripinfo_result = _summarise(scenario, arm, seed, noise_name, tripinfo, blocked, max_tail, sequencer)
+    tripinfo_result.green_sequence = "".join(
+        p.approach[0] for p in sequencer.phases if p.state.value == "GREEN"
+    )
     tripinfo_result.timing = arm.timing or timing
     tripinfo_result.norm = norm
     tripinfo.unlink(missing_ok=True)

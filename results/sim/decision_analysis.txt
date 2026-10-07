@@ -1,0 +1,18 @@
+== actuated timing, saturating normaliser
+  S3 vs S4   heavy            first differing green (of total): never/95  never/95  never/84  never/92  never/96
+  S3 vs S4   oversat          first differing green (of total): never/43  never/41  2/46  never/45  never/45
+  S3 vs S4   unequal_oversat  first differing green (of total): never/90  never/88  never/90  never/90  never/91
+  S3 vs S4   growing          first differing green (of total): never/120  never/118  never/117  never/119  never/122
+  S2 vs S3S  heavy            first differing green (of total): never/95  never/95  never/84  never/92  never/96
+  S2 vs S3S  oversat          first differing green (of total): never/43  never/41  never/43  never/45  never/45
+  S2 vs S3S  unequal_oversat  first differing green (of total): never/90  never/88  never/90  never/90  never/91
+  S2 vs S3S  growing          first differing green (of total): never/120  never/118  never/117  never/119  never/122
+== actuated timing, physical normaliser
+  S3 vs S4   heavy            first differing green (of total): never/95  never/95  never/84  never/92  never/96
+  S3 vs S4   oversat          first differing green (of total): never/43  never/41  never/43  never/45  never/45
+  S3 vs S4   unequal_oversat  first differing green (of total): never/90  never/88  never/90  never/90  never/91
+  S3 vs S4   growing          first differing green (of total): never/120  never/118  never/117  never/119  never/122
+  S2 vs S3S  heavy            first differing green (of total): never/95  never/95  never/84  never/92  never/96
+  S2 vs S3S  oversat          first differing green (of total): never/43  1/41  never/43  never/45  never/45
+  S2 vs S3S  unequal_oversat  first differing green (of total): never/90  1/88  never/90  never/90  never/91
+  S2 vs S3S  growing          first differing green (of total): never/120  never/118  never/117  never/119  never/122

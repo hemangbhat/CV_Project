@@ -49,7 +49,7 @@ def timing_figure(summary: dict) -> Path:
         ("S4 proposed score, actuated timing", phys, "S4"),
     ]
     scen = [s for s in SCENARIOS if s in phys]
-    fig, ax = plt.subplots(figsize=(8.5, 5.2), dpi=150)
+    fig, ax = plt.subplots(figsize=(8.5, 6.4), dpi=150)
     for k, (label, table, arm) in enumerate(series):
         ys = [i + (k - 2) * 0.14 for i in range(len(scen))]
         means = [table[s][arm]["mean_delay"]["mean"] for s in scen]
@@ -59,10 +59,14 @@ def timing_figure(summary: dict) -> Path:
     ax.set_yticks(range(len(scen)), scen)
     ax.invert_yaxis()
     ax.set_xscale("log")
+    ticks = [20, 30, 50, 100, 200, 300]
+    ax.set_xticks(ticks, [str(t) for t in ticks])
+    ax.minorticks_off()
     ax.set_xlabel("mean delay per vehicle, s (log scale; bars = 95% CI over 20 test seeds)", color=INK)
     ax.set_title("Closed loop: the green-time rule dominates delay", color=INK, loc="left", fontsize=12)
     _style(ax)
-    ax.legend(frameon=False, fontsize=8, loc="lower right", labelcolor=INK)
+    ax.legend(frameon=False, fontsize=8, loc="upper center", bbox_to_anchor=(0.45, -0.12),
+              ncol=2, labelcolor=INK)
     fig.tight_layout()
     path = OUT / "fig_timing_vs_score.png"
     fig.savefig(path)
@@ -81,7 +85,7 @@ def paired_figure(summary: dict, group: str) -> Path | None:
         ("S3X − S3  (X instead of count forecast F)", "S3X", "vs_S3"),
     ]
     scen = [s for s in SCENARIOS if s in table]
-    fig, ax = plt.subplots(figsize=(8.5, 5.2), dpi=150)
+    fig, ax = plt.subplots(figsize=(8.5, 6.4), dpi=150)
     ax.axvline(0.0, color=MUTED, linewidth=1)
     for k, (label, arm, key) in enumerate(comparisons):
         ys, xs, es = [], [], []
@@ -100,7 +104,8 @@ def paired_figure(summary: dict, group: str) -> Path | None:
     ax.set_title(f"Score ablation, {timing} timing, {norm} density normaliser",
                  color=INK, loc="left", fontsize=12)
     _style(ax)
-    ax.legend(frameon=False, fontsize=8, loc="best", labelcolor=INK)
+    ax.legend(frameon=False, fontsize=8, loc="upper center", bbox_to_anchor=(0.45, -0.12),
+              ncol=2, labelcolor=INK)
     fig.tight_layout()
     path = OUT / f"fig_paired_{timing}_{norm}.png"
     fig.savefig(path)
