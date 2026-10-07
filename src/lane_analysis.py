@@ -305,6 +305,25 @@ class ApproachAxis:
                 best_distance, best_arc = distance, start + t
         return min(max(best_arc / self.length, 0.0), 1.0)
 
+    def direction_at(self, point: tuple[float, float]) -> tuple[float, float]:
+        """Unit vector of the road (upstream) direction nearest to ``point``.
+
+        For a drawn polyline this is the direction of the segment the point projects onto,
+        so on a curved fisheye road it follows the local road direction; otherwise it is
+        the single axis direction.
+        """
+        if not self._polyline:
+            return (self._ux, self._uy)
+        px, py = float(point[0]), float(point[1])
+        best, best_distance = self._polyline[0], math.inf
+        for segment in self._polyline:
+            ax, ay, ux, uy, seg, _ = segment
+            t = min(max((px - ax) * ux + (py - ay) * uy, 0.0), seg)
+            distance = math.hypot(px - (ax + ux * t), py - (ay + uy * t))
+            if distance < best_distance:
+                best, best_distance = segment, distance
+        return (best[2], best[3])
+
     @property
     def upstream(self) -> tuple[float, float]:
         """The unit vector pointing upstream, away from the stop line.
@@ -699,6 +718,10 @@ class AssignedTrack:
     # displacement by (a distant vehicle has a small box and moves few pixels).
     # 0.0 on hand-built values that never came from a Track.
     box_height: float = 0.0
+    # Box width in pixels. With the height it gives the vehicle's extent ALONG the road
+    # (see ApproachAxis.direction_at), which is what the queue-tail gap is scaled by: a
+    # car seen side-on is wide and short, so its height alone understates its length.
+    box_width: float = 0.0
 
     def __post_init__(self) -> None:
         if self.approach is None and self.is_queueing:
@@ -838,6 +861,7 @@ class ApproachAssigner:
                         approach=None,
                         is_queueing=False,
                         box_height=float(track.height),
+                        box_width=float(track.width),
                     )
                 )
                 continue
@@ -865,6 +889,7 @@ class ApproachAssigner:
                     # own queue region — never a neighbour's.
                     is_queueing=point_in_polygon(chosen.queue_region, ref),
                     box_height=float(track.height),
+                    box_width=float(track.width),
                 )
             )
 

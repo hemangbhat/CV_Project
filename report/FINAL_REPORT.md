@@ -120,8 +120,8 @@ grows. F can signal clearing, never further growth.
   height per second over the last second. Tracking (ByteTrack) is what makes this
   possible: it compares the *same* vehicle across frames.
 * **X**, the queue tail: the position of the last vehicle in the contiguous chain of
-  stopped vehicles that starts at the stop line. Consecutive members may be at most two
-  box heights apart.
+  stopped vehicles that starts at the stop line. Consecutive members may be at most two vehicle lengths apart, a length being the box's
+  extent along the local road direction.
 * **S**, local spillback risk: `S = clamp(X + dX/dt · 5 s)`, with the slope fitted by least
   squares over 2.5 s. S rises above X for a growing queue, equals X for a steady one, and
   falls below X for a clearing one. It does this even while Q = 1.

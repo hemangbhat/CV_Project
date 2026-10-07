@@ -190,8 +190,8 @@ class Config:
     stopped_speed_ratio: float = 0.2        # > 0, box heights per second
     queue_tail_gap: float = 0.0             # 0..1, 0 = legacy max reach
     # Perspective-scaled form of the same rule, for video: consecutive stopped vehicles
-    # belong to one queue when they are at most this many BOX HEIGHTS apart along the
-    # queue axis, and a chain may start at any stopped vehicle inside the Queue_Region.
+    # belong to one queue when they are at most this many VEHICLE LENGTHS apart along the
+    # queue axis (a vehicle's length = its box's extent along the local road direction), and a chain may start at any stopped vehicle inside the Queue_Region.
     # A fixed axis fraction cannot work on a fisheye view, where one car near the camera
     # spans half the axis and one far away a few percent. > 0 overrides queue_tail_gap.
     queue_tail_gap_boxes: float = 0.0       # >= 0, 0 = use queue_tail_gap

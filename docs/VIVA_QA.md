@@ -99,8 +99,8 @@ the road; fraction because it needs no camera calibration or metres.
    height per second over the last second.
 2. Each stopped vehicle gets its axis fraction.
 3. Sort them. Start at the first stopped vehicle inside the stop-line strip.
-4. Walk upstream while each next vehicle is within two of its own box heights of the
-   previous one.
+4. Walk upstream while each next vehicle is within two of its own vehicle lengths of the
+   previous one (length = its box's extent along the road direction).
 5. X is the position of the last vehicle in that chain.
 
 Code: `queue_tail_reach_scaled`, `src/traffic_metrics.py`.
@@ -259,6 +259,12 @@ After making the stopped test robust, X on the old geometry dropped to about 0 o
 approach. I then plotted where queued vehicles sat along each axis: 0.2–0.9 instead of
 near 0. Overlaying the ROIs showed one polygon spanning two legs, and the calibrated axes
 for North and West reversed (outbound traffic dominated the motion votes).
+
+**"Why is the queue gap measured along the road and not in box heights?"**
+Cars on the West leg are seen side-on, so their box is twice as wide as it is tall. Using
+box height cut real queues after the first row (X = 0.25 where the visible queue reached
+0.95). The vehicle's length on the road is its box projected onto the road direction:
+|w·ux| + |h·uy|. That is the same "two vehicle lengths" rule the simulation uses in metres.
 
 **"Why a stopped threshold of 0.2 box heights per second?"**
 About 1 m/s for a 5 m car, a usual meaning of "stopped" in traffic engineering. Dividing

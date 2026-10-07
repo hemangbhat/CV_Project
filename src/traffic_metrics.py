@@ -469,7 +469,7 @@ class MetricsEngine:
                     if self._tail_gap_boxes > 0.0 and axis.length > 0.0:
                         allowance = (
                             self._tail_gap_boxes
-                            * float(getattr(track, "box_height", 0.0))
+                            * self._extent_along(axis, track, point)
                             / axis.length
                         )
                         stopped_items[approach].append(
@@ -614,6 +614,24 @@ class MetricsEngine:
         dx = point[0] - previous[0]
         dy = point[1] - previous[1]
         return math.hypot(dx, dy) < threshold
+
+    @staticmethod
+    def _extent_along(axis, track, point: tuple[float, float]) -> float:
+        """The vehicle's length along the road, in pixels, from its box.
+
+        The extent of an axis-aligned box of width ``w`` and height ``h`` along the unit
+        direction ``(ux, uy)`` is ``|w·ux| + |h·uy|``. Using the local road direction
+        rather than the box height alone matters on this camera: a car seen side-on (the
+        West leg) is about twice as wide as it is tall, so "two box heights" was shorter
+        than one car plus its gap and broke real queues apart. Falls back to the box
+        height when no width is known (hand-built tracks).
+        """
+        height = float(getattr(track, "box_height", 0.0))
+        width = float(getattr(track, "box_width", 0.0))
+        if width <= 0.0:
+            return height
+        ux, uy = axis.direction_at(point)
+        return abs(width * ux) + abs(height * uy)
 
     def _window_frames(self, dt: float) -> int:
         """Frames in the stopped-test window, or 0 in legacy per-frame mode."""

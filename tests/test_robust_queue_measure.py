@@ -229,3 +229,26 @@ def test_v2_geometry_loads_with_drawn_axes() -> None:
     for approach in cfg.approaches:
         # The first queue_axis point is the stop line: fraction 0.
         assert axes[approach.name].fraction(approach.queue_axis[0]) == pytest.approx(0.0)
+
+
+def test_gap_scales_with_extent_along_the_road_not_box_height(base: Config) -> None:
+    """A side-on car (wide, short box) on a horizontal road: its length along the road is
+    the box WIDTH. A queue of such cars spaced 1.5 car lengths apart must stay one queue."""
+    cfg = robust(load_config(str(CALIBRATED.parent / "bellevue_116th_v2.json")),
+                 queue_tail_gap=0.0, queue_tail_gap_boxes=2.0)
+    axis = build_approach_axes(cfg)["West"]          # roughly horizontal, ~380 px long
+    ux, uy = axis.upstream
+    engine = MetricsEngine(cfg)
+    spacing = 1.5 * 110.0                            # 110 px wide, 55 px tall cars
+    cars = []
+    for k in range(3):
+        d = 10.0 + k * spacing
+        p = (axis.origin[0] + ux * d, axis.origin[1] + uy * d)
+        cars.append(AssignedTrack(track_id=k + 1, vehicle_class="car", ref_point=p, approach="West",
+                                  is_queueing=(k == 0), box_height=55.0, box_width=110.0))
+    out = None
+    for _ in range(40):
+        out = engine.update(cars, ALL_RED, DT)["West"]
+    # Box height alone (2 x 55 = 110 px) is less than the 165 px spacing and would cut the
+    # chain after the first car; the extent along the road (about 2 x 110) keeps it whole.
+    assert out.queue_reach == pytest.approx((10.0 + 2 * spacing) / axis.length, abs=0.03)

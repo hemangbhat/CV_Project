@@ -31,7 +31,7 @@ cfg = dataclasses.replace(
 )
 axes = build_approach_axes(cfg)
 assigner, engine = ApproachAssigner(cfg), MetricsEngine(cfg)
-tracker = CachedTracker(f"results/track_cache/bellevue_116th_{args.clip}__yolov8n__c0p30.json.gz", cfg)
+tracker = CachedTracker(f"results/track_cache/bellevue_116th_{args.clip}__yolov8m__c0p30.json.gz", cfg)
 cap = cv2.VideoCapture(f"videos/bellevue_116th_{args.clip}.mp4")
 wanted, panels = set(args.frames), []
 

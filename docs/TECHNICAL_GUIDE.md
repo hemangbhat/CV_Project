@@ -140,7 +140,7 @@ storage*, it needs no camera calibration and no metres.
 3. If a point lies in two ROIs (a calibration fault), the nearest ROI centroid wins and the
    event is logged.
 4. `is_queueing = p` lies in that approach's queue strip Θ.
-5. The box height is carried along. The stopped test and the queue-tail gap need it.
+5. The box height and width are carried along. The stopped test divides by the height; the queue-tail gap uses the box's extent along the road.
 
 ## 7. Measurements D, Q, A
 
@@ -192,7 +192,7 @@ of stopped. Measured effect: stops per vehicle on the busy clip fell from 4.28 t
 
 **Definition.** A queue is a chain of stopped vehicles that starts at the stop line. For
 each stopped vehicle on approach *i*, take its axis fraction `f`, its gap allowance
-`g = 2 × box_height / axis_length`, and whether it is in Θ. Sort by `f`, then walk upstream:
+`g = 2 × L / axis_length`, where `L = |w·ux| + |h·uy|` is the box's extent along the local road direction `(ux, uy)` (i.e. the vehicle's length on the road), and whether it is in Θ. Sort by `f`, then walk upstream:
 
 ```
 start the chain at the first stopped vehicle that is in Θ (or within its g of the line)
@@ -208,6 +208,12 @@ X_i = f of the last vehicle in the chain   (0 if there is no chain)
 * *Scaled:* on a fisheye view one car near the camera spans about half the axis, and one
   far away a few percent. A fixed gap either breaks every near queue or bridges every far
   gap. "Two vehicle lengths" is the same physical rule everywhere in the image.
+* *Length along the road, not box height:* the first version used box height. On the West
+  leg cars are seen side-on (box about 110 px wide, 55 px tall), so two box heights were
+  shorter than one car plus its gap, and the chain broke after the first row: X = 0.25
+  where the visible queue reached 0.95. Projecting the box onto the road direction fixed
+  it (`MetricsEngine._extent_along`; test
+  `test_gap_scales_with_extent_along_the_road_not_box_height`).
 
 *Worked example:* stopped cars at f = 0.10 (in Θ), 0.30 and 0.48, then a lone stopped car
 at 0.95, each with g = 0.25. The chain runs 0.10 → 0.30 (gap 0.20) → 0.48 (gap 0.18).

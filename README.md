@@ -36,6 +36,7 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 |---|---|
 | [`report/FINAL_REPORT.md`](report/FINAL_REPORT.md) | The research report: problem → Raza → Li/Wei → enhancement → experiments → results → limitations |
 | [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | How every stage works: formulas, code locations, design reasons, worked examples |
+| [`docs/STUDY_GUIDE.md`](docs/STUDY_GUIDE.md) | How to learn the project in depth: derivations, exercises, presentation and demo plan |
 | [`docs/VIVA_QA.md`](docs/VIVA_QA.md) | Exact answers to the 32 expected questions and the hard follow-ups |
 | [`AUDIT_REPORT.md`](AUDIT_REPORT.md) | What was wrong with the earlier results, how it was found, how it was fixed |
 | [`sim/PROTOCOL.md`](sim/PROTOCOL.md) | The closed-loop experiment, frozen before the test runs |
