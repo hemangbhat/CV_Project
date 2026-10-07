@@ -1,0 +1,131 @@
+{
+ "busy": {
+  "arms": {
+   "S0": {
+    "greens": [
+     "N30",
+     "E30",
+     "S30",
+     "W30*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 4.114,
+    "run_id": "bellevue_116th_busy__fixed__alpha0p50__20261007-105718",
+    "decisions_differing_from_S3": 3
+   },
+   "S1": {
+    "greens": [
+     "N30",
+     "S45",
+     "W45*"
+    ],
+    "open_loop_served": 28,
+    "open_loop_wait_s": 2.99,
+    "run_id": "bellevue_116th_busy__adaptive__alpha1p00__20261007-105730",
+    "decisions_differing_from_S3": 1
+   },
+   "S2": {
+    "greens": [
+     "N30",
+     "N45",
+     "W60*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105741",
+    "decisions_differing_from_S3": 0
+   },
+   "S3": {
+    "greens": [
+     "N30",
+     "N45",
+     "W60*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105753",
+    "decisions_differing_from_S3": 0
+   },
+   "S4": {
+    "greens": [
+     "N30",
+     "N45",
+     "W45*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105805",
+    "decisions_differing_from_S3": 0
+   },
+   "S4X": {
+    "greens": [
+     "N30",
+     "N45",
+     "W45*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105817",
+    "decisions_differing_from_S3": 0
+   },
+   "S3S": {
+    "greens": [
+     "N30",
+     "N45",
+     "W45*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105829",
+    "decisions_differing_from_S3": 0
+   },
+   "S3X": {
+    "greens": [
+     "N30",
+     "N45",
+     "W45*"
+    ],
+    "open_loop_served": 56,
+    "open_loop_wait_s": 1.964,
+    "run_id": "bellevue_116th_busy__adaptive__alpha0p50__20261007-105841",
+    "decisions_differing_from_S3": 0
+   },
+   "NULL": {
+    "greens": [
+     "N30",
+     "N45",
+     "W45*"
+    ],
+    "note": "replay of S4 metrics with S = 0",
+    "decisions_differing_from_S3": 0
+   }
+  },
+  "measurement": {
+   "North": {
+    "Q_saturated_share": 0.027639751552795033,
+    "X_nonzero_share": 0.7642857142857142,
+    "X_mean": 0.24722882578243904,
+    "X_jump_gt_0p3_share": 0.0018633540372670807
+   },
+   "East": {
+    "Q_saturated_share": 0.0,
+    "X_nonzero_share": 0.1015527950310559,
+    "X_mean": 0.02704164604052765,
+    "X_jump_gt_0p3_share": 0.004347826086956522
+   },
+   "South": {
+    "Q_saturated_share": 0.0018633540372670807,
+    "X_nonzero_share": 0.7937888198757764,
+    "X_mean": 0.6783535450578492,
+    "X_jump_gt_0p3_share": 0.0034161490683229812
+   },
+   "West": {
+    "Q_saturated_share": 0.0006211180124223603,
+    "X_nonzero_share": 0.6481366459627329,
+    "X_mean": 0.16699601343315956,
+    "X_jump_gt_0p3_share": 0.0034161490683229812
+   }
+  },
+  "stops_per_vehicle": 0.7414634146341463
+ }
+}
