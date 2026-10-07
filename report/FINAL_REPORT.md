@@ -21,7 +21,7 @@ fixed stop-line region (Q) saturates once the region is full, so a forecast of t
 The measurement works. After three corrections found during this project — a windowed,
 perspective-normalised stopped test; a contiguous queue tail; and recalibrated geometry
 with drawn stop-line axes — the measured queue tail matches the visible queue where the
-detector sees the vehicles. Stop counts fall from an unphysical 4.3 to 0.76 per vehicle,
+detector sees the vehicles. Stop counts fall from an unphysical 4.3 to 0.74 per vehicle,
 and frame-to-frame jumps in X drop from 7% to ≤ 1% of frames.
 
 The control benefit is **not** demonstrated. An audit showed that the earlier headline
@@ -193,11 +193,11 @@ claim where vehicles respond to the signal.
 
 ### 6.2 Measurement on real footage (after the fixes)
 
-`python audit/measurement_compare.py` → `report/measurement_compare.json`; busy clip:
+`python audit/measurement_compare.py` → `report/measurement_compare.json`; busy clip, YOLOv8n track cache (the final YOLOv8m numbers are in §6.4):
 
 | | legacy | robust test, old geometry | v2 geometry + robust test |
 |---|---|---|---|
-| stops per vehicle | 4.28 | 0.46 | 0.76 |
+| stops per vehicle | 4.28 | 0.46 | 0.76 (0.74 with YOLOv8m, §6.4) |
 | North: X > 0 / X jump > 0.3 | 99% / 7.3% | 0.2% / 0.06% | 71% / 0.06% |
 | South: X > 0 / X jump > 0.3 | 58% / 3.0% | 0% / 0% | 48% / 1.1% |
 | West: X > 0 / X jump > 0.3 | 59% / 4.8% | 0.2% / 0% | 58% / 0.5% |
@@ -292,7 +292,39 @@ the state measure.
 
 ### 6.4 Open-loop decision analysis on the footage
 
-*(Filled in from the final v2 / YOLOv8m runs; see `results/final_video/`.)*
+Final configuration: v2 geometry, YOLOv8m track cache, robust measurement. Every arm
+replays identical tracks (`python scripts/run_final_video.py`, `results/final_video/summary.json`).
+On recorded footage this supports two things only: **is the measurement sane**, and
+**what does each controller decide** (§6.1 W1 explains why served/waiting cannot rank arms).
+
+*Measurement (S4 run, per approach N / E / S / W):*
+
+| clip | X > 0 (share of frames) | mean X | X jump > 0.3 | Q = 1 | stops per vehicle |
+|---|---|---|---|---|---|
+| busy (107 s) | 76% / 12% / 79% / 65% | 0.25 / 0.04 / 0.68 / 0.37 | ≤ 0.9% | ≤ 2.8% | 0.74 |
+| dev (240 s) | 34% / 45% / 66% / 46% | 0.13 / 0.18 / 0.53 / 0.23 | ≤ 1.0% | ≤ 5.9% | 0.57 |
+| final (240 s) | 57% / 44% / 53% / 52% | 0.20 / 0.17 / 0.39 / 0.28 | ≤ 0.8% | ≤ 3.5% | 0.56 |
+
+Compare the legacy measurement: up to 8% jumps, 2.1–4.3 stops per vehicle. Even with the
+better detector the count queue is rarely saturated on this lightly loaded footage
+(Q = 1 in ≤ 6% of frames). The saturation regime the method targets is therefore
+mainly exercised in the simulation, not in these clips.
+
+*Decisions (order of approaches served; `*` = the green truncated by the end of the clip):*
+
+| clip | S0 fixed | S1 Raza-style | S3 +F | S4 proposed | NULL |
+|---|---|---|---|---|---|
+| busy | N E S W* | N S W* | N N W* | N N W* | N N W* |
+| dev | N E S W N E S W* | N W E S N W E* | N E E S W N E* | N E E S W N* | N E S W N E S W* |
+| final | N E S W N E S W* | N E N S W E* | N E N S W E* | N E N S W E* | N E N S W E* |
+
+On all three clips **S4 serves exactly the same approach as S3 at every green that starts**.
+The only differences are green *lengths* under band timing (e.g. dev: E45 vs E30), so S4
+fits one phase fewer before the clip ends. This is the real-footage counterpart of the
+closed-loop decision analysis (1 changed choice in 40 runs). On the dev clip S4 also
+differs from NULL: removing S while keeping the 0.4 base weight changes the order,
+and adding S back restores S3's order. That is consistent with S being nearly
+rank-equivalent to the existing terms rather than adding new ranking information.
 
 ### 6.5 Earlier negative results (kept; detail in `docs/archive/`)
 

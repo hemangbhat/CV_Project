@@ -185,7 +185,7 @@ simulated controller can change.
 
 **26. What improved?**
 * **The measurement:**
-  * stops per vehicle 4.28 → 0.76 on the busy clip;
+  * stops per vehicle 4.28 → 0.74 on the busy clip;
   * frames where X jumps by more than 0.3 fell from 7.3% to ≤ 1.1%;
   * the measured tail matches the visible queue where vehicles are detected
     (`report/queue_tail_validation.png`).

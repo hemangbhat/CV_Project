@@ -31,7 +31,7 @@ remaining time, and §8 is the plan.
 
 ### Final outcome (after the fixes, October 2026)
 
-* **Measurement:** fixed (W5, W7). Stops per vehicle 4.28 → 0.76; frames with X jumps > 0.3
+* **Measurement:** fixed (W5, W7). Stops per vehicle 4.28 → 0.74; frames with X jumps > 0.3
   fell from 7.3% to ≤ 1.1%; the measured queue tail matches the visible queue where vehicles
   are detected. Remaining limit: detection recall on distant cars (YOLOv8m used in final runs).
 * **Control claim:** tested properly (W1–W4) in a pre-registered closed-loop SUMO experiment.
