@@ -1,0 +1,47 @@
+{
+  "source": [
+    "bellevue_116th_busy__yolov8n__c0p30.json.gz",
+    "bellevue_116th_dev__yolov8n__c0p30.json.gz",
+    "bellevue_116th_final__yolov8n__c0p30.json.gz"
+  ],
+  "seconds": 587.3,
+  "inbound_tracks": {
+    "North": 159,
+    "East": 224,
+    "South": 126,
+    "West": 228
+  },
+  "per_clip": {
+    "bellevue_116th_busy__yolov8n__c0p30.json.gz": {
+      "North": 47,
+      "East": 40,
+      "South": 40,
+      "West": 24
+    },
+    "bellevue_116th_dev__yolov8n__c0p30.json.gz": {
+      "North": 64,
+      "East": 66,
+      "South": 30,
+      "West": 93
+    },
+    "bellevue_116th_final__yolov8n__c0p30.json.gz": {
+      "North": 48,
+      "East": 118,
+      "South": 56,
+      "West": 111
+    }
+  },
+  "tracks_per_hour": {
+    "North": 974.6296611612464,
+    "East": 1373.0631704410014,
+    "South": 772.3480333730632,
+    "West": 1397.5821556274477
+  },
+  "shares": {
+    "North": 0.2157394843962008,
+    "East": 0.3039348710990502,
+    "South": 0.17096336499321574,
+    "West": 0.3093622795115332
+  },
+  "note": "Track counts include ByteTrack identity switches; only the shares are used."
+}

@@ -177,7 +177,7 @@ def scenarios() -> dict[str, Scenario]:
     }
     shares = load_video_shares()
     if shares:
-        total = 1800.0  # veh/h over the junction, medium-heavy
+        total = 2600.0  # veh/h over the junction: ~75% of the all-max-green capacity
         out["calibrated"] = Scenario(
             "calibrated", "per-approach shares measured by the vision pipeline on the Bellevue clips",
             {a: round(total * shares[a], 1) for a in APPROACHES},
