@@ -34,7 +34,7 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 
 | Document | What it is for |
 |---|---|
-| [`EXPLAINED_SIMPLY.md`](EXPLAINED_SIMPLY.md) | **Start here.** The whole project in very simple words, with a "say it to your professor" line for every idea |
+| [`PROJECT_EXPLAINED.md`](PROJECT_EXPLAINED.md) | **Start here.** Every concept, term and abbreviation (SUMO, YOLO, ByteTrack, PCE, MPC, CI, ...) with its full form, meaning and role in this project |
 | [`report/FINAL_REPORT.md`](report/FINAL_REPORT.md) | The research report: problem → Raza → Li/Wei → enhancement → experiments → results → limitations |
 | [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | How every stage works: formulas, code locations, design reasons, worked examples |
 | [`docs/STUDY_GUIDE.md`](docs/STUDY_GUIDE.md) | How to learn the project in depth: derivations, exercises, presentation and demo plan |
