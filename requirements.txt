@@ -1,0 +1,10 @@
+# Runtime dependencies (Requirement 15.8).
+# Only Python, OpenCV, Ultralytics YOLO (which ships ByteTrack), NumPy and
+# Matplotlib are permitted at runtime. Do not add anything else here.
+# ByteTrack is consumed through Ultralytics' built-in tracker, so it needs no
+# separate entry. Configuration is JSON via the standard library, so no YAML
+# parser is required.
+opencv-python==4.13.0.92
+ultralytics==8.3.253
+numpy==2.2.6
+matplotlib==3.10.8

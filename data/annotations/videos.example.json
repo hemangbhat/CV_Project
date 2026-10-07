@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "Template for data/annotations/videos.json (Requirements 16.1 to 16.3).",
+    "Copy this file to videos.json and replace the entries with your own footage.",
+    "The set must hold between 2 and 5 videos. 'role' is 'development' for videos the",
+    "ROI polygons and parameters were calibrated on, and 'final' for videos the",
+    "reported comparison is measured on; the two are reported in separate sections of",
+    "the comparison table. 'visible_approaches' lists the approaches actually in",
+    "frame, and 'resolution' is [width, height]. Keys beginning with an underscore",
+    "are ignored."
+  ],
+  "videos": [
+    {
+      "path": "videos/junction_a.mp4",
+      "role": "development",
+      "frame_rate": 25.0,
+      "resolution": [1280, 720],
+      "duration_seconds": 180.0,
+      "visible_approaches": ["North", "East", "South", "West"]
+    },
+    {
+      "path": "videos/junction_b.mp4",
+      "role": "final",
+      "frame_rate": 30.0,
+      "resolution": [1920, 1080],
+      "duration_seconds": 240.0,
+      "visible_approaches": ["North", "East", "South", "West"]
+    }
+  ]
+}

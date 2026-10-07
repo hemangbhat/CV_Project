@@ -1,0 +1,209 @@
+{
+  "_comment": [
+    "STAGE 2 - add QUEUE. alpha = 0.5 gives density and queue equal share.",
+    "Isolates what queue-awareness alone buys over Raza.",
+    "Score_i = 0.5*D_i + 0.5*Q_i"
+  ],
+  "alpha": 0.5,
+  "confidence_threshold": 0.3,
+  "model_path": "models/yolov8n.pt",
+  "track_buffer": 30,
+  "trajectory_length": 30,
+  "frame_size": [
+    1280,
+    720
+  ],
+  "approaches": [
+    {
+      "name": "North",
+      "roi_polygon": [
+        [
+          300,
+          80
+        ],
+        [
+          1010,
+          150
+        ],
+        [
+          985,
+          212
+        ],
+        [
+          300,
+          240
+        ]
+      ],
+      "queue_region": [
+        [
+          350,
+          105
+        ],
+        [
+          590,
+          120
+        ],
+        [
+          585,
+          200
+        ],
+        [
+          345,
+          190
+        ]
+      ],
+      "saturation_count": 5.0,
+      "queue_capacity": 4.0
+    },
+    {
+      "name": "East",
+      "roi_polygon": [
+        [
+          820,
+          225
+        ],
+        [
+          1130,
+          240
+        ],
+        [
+          1160,
+          480
+        ],
+        [
+          840,
+          470
+        ]
+      ],
+      "queue_region": [
+        [
+          855,
+          260
+        ],
+        [
+          1085,
+          275
+        ],
+        [
+          1105,
+          455
+        ],
+        [
+          865,
+          445
+        ]
+      ],
+      "saturation_count": 4.0,
+      "queue_capacity": 3.0
+    },
+    {
+      "name": "South",
+      "roi_polygon": [
+        [
+          690,
+          540
+        ],
+        [
+          1120,
+          500
+        ],
+        [
+          1240,
+          715
+        ],
+        [
+          650,
+          719
+        ]
+      ],
+      "queue_region": [
+        [
+          735,
+          560
+        ],
+        [
+          1080,
+          525
+        ],
+        [
+          1150,
+          665
+        ],
+        [
+          695,
+          680
+        ]
+      ],
+      "saturation_count": 4.0,
+      "queue_capacity": 3.0
+    },
+    {
+      "name": "West",
+      "roi_polygon": [
+        [
+          20,
+          300
+        ],
+        [
+          385,
+          320
+        ],
+        [
+          420,
+          565
+        ],
+        [
+          30,
+          605
+        ]
+      ],
+      "queue_region": [
+        [
+          60,
+          350
+        ],
+        [
+          345,
+          370
+        ],
+        [
+          365,
+          525
+        ],
+        [
+          70,
+          545
+        ]
+      ],
+      "saturation_count": 5.0,
+      "queue_capacity": 4.0
+    }
+  ],
+  "green_time_bands": [
+    {
+      "min_score": 0.0,
+      "green_time": 30.0
+    },
+    {
+      "min_score": 0.3,
+      "green_time": 45.0
+    },
+    {
+      "min_score": 0.6,
+      "green_time": 60.0
+    }
+  ],
+  "min_green_time": 30.0,
+  "max_green_time": 60.0,
+  "yellow_duration": 3.0,
+  "starvation_limit": 3,
+  "default_frame_rate": 30.0,
+  "use_pce_weighting": true,
+  "pce_weights": {
+    "bus": 3.0,
+    "car": 1.0,
+    "motorcycle": 0.5,
+    "truck": 3.0
+  },
+  "quit_key": "q"
+}

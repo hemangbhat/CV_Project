@@ -1,0 +1,5 @@
+# Development-only dependencies. These are never imported by src/, so
+# Requirement 15.8 (runtime stack) stays satisfied.
+-r requirements.txt
+pytest==9.0.3
+hypothesis==6.155.2

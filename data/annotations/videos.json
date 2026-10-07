@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Evaluation input set (Requirements 16.1 to 16.3).",
+    "",
+    "Source: Bellevue Traffic Video Dataset, City of Bellevue, Washington, USA.",
+    "  https://github.com/City-of-Bellevue/TrafficVideoDataset",
+    "  Released by the City of Bellevue for research purposes. Footage captured",
+    "  September 2017 from a pole-mounted traffic camera at 116th Ave NE / NE 12th St,",
+    "  natively 1280x720. Provided 'as is' with no warranty (see dataset DISCLAIMER).",
+    "",
+    "Both clips come from the SAME fixed camera, which is required: run_evaluation",
+    "applies one Config, hence one set of ROI polygons, to every video in this set.",
+    "",
+    "Preprocessing: the source hourly recordings drop frames, so their container frame",
+    "rate is misleading (the 08:08 hour reports 27.6452 fps). The longest gap-free run",
+    "of each hour was measured at 33.33 ms +- 0.01 per frame, i.e. true 30 fps, and a",
+    "240 s window was cut from within that run and re-encoded at a constant 30 fps.",
+    "No frames were duplicated or interpolated. This matters because Waiting_Time",
+    "accumulates as dt = 1 / frame_rate and a variable rate would corrupt it.",
+    "",
+    "Compass approach names are a labelling convention required by the config schema,",
+    "not true bearings. See config/bellevue_116th.json for the mapping to camera view."
+  ],
+  "videos": [
+    {
+      "path": "videos/bellevue_116th_dev.mp4",
+      "role": "development",
+      "frame_rate": 30.0,
+      "resolution": [1280, 720],
+      "duration_seconds": 240.0,
+      "visible_approaches": ["North", "East", "South", "West"]
+    },
+    {
+      "path": "videos/bellevue_116th_final.mp4",
+      "role": "final",
+      "frame_rate": 30.0,
+      "resolution": [1280, 720],
+      "duration_seconds": 240.0,
+      "visible_approaches": ["North", "East", "South", "West"]
+    },
+    {
+      "path": "videos/bellevue_116th_busy.mp4",
+      "role": "final",
+      "frame_rate": 30.0,
+      "resolution": [1280, 720],
+      "duration_seconds": 107.3,
+      "visible_approaches": ["North", "East", "South", "West"]
+    }
+  ]
+}

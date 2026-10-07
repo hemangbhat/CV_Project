@@ -1,0 +1,85 @@
+{
+  "_comment": [
+    "PRIMARY enhancement: short-term queue FORECAST (E8), the vision-only analogue",
+    "of Wei et al.'s (2025 TITS) predictive queue-dynamics control.",
+    "",
+    "The controller acts on where each approach's queue is HEADING, not only where it",
+    "stands: QueuePredictor fits the recent trend of normalized_queue and projects it",
+    "forecast_horizon_seconds ahead. That forecast enters the Score at forecast_weight",
+    "(omega = 0.4) and pre-sizes the discharge-limited green, and gap-out ends a green",
+    "once its queue actually clears. Together this grants green before a queue spills",
+    "back rather than after it has formed.",
+    "",
+    "Supporting Li et al. (2025 TITS) mechanisms are on underneath: use_pce_queue (E1),",
+    "use_discharge_green (E3, with the Eq. 7 lost-time term), use_gap_out (E6). E5",
+    "over-saturation measurement and E7 stop counting are always recorded.",
+    "",
+    "No MPC, no link-transmission model, no solver: a least-squares trend line over a",
+    "0.5 s window (forecast_window_frames 15 at 30 fps) feeding the existing controller.",
+    "Geometry, alpha, saturation counts and queue capacities are copied unchanged from",
+    "config/bellevue_116th.json. Rationale: report/paper_limitations_analysis.md"
+  ],
+  "alpha": 0.5,
+  "confidence_threshold": 0.3,
+  "model_path": "models/yolov8n.pt",
+  "track_buffer": 30,
+  "trajectory_length": 30,
+  "frame_size": [1280, 720],
+  "approaches": [
+    {
+      "name": "North",
+      "roi_polygon": [[300, 80], [1010, 150], [985, 212], [300, 240]],
+      "queue_region": [[350, 105], [590, 120], [585, 200], [345, 190]],
+      "saturation_count": 5.0,
+      "queue_capacity": 4.0
+    },
+    {
+      "name": "East",
+      "roi_polygon": [[820, 225], [1130, 240], [1160, 480], [840, 470]],
+      "queue_region": [[855, 260], [1085, 275], [1105, 455], [865, 445]],
+      "saturation_count": 4.0,
+      "queue_capacity": 3.0
+    },
+    {
+      "name": "South",
+      "roi_polygon": [[690, 540], [1120, 500], [1240, 715], [650, 719]],
+      "queue_region": [[735, 560], [1080, 525], [1150, 665], [695, 680]],
+      "saturation_count": 4.0,
+      "queue_capacity": 3.0
+    },
+    {
+      "name": "West",
+      "roi_polygon": [[20, 300], [385, 320], [420, 565], [30, 605]],
+      "queue_region": [[60, 350], [345, 370], [365, 525], [70, 545]],
+      "saturation_count": 5.0,
+      "queue_capacity": 4.0
+    }
+  ],
+  "green_time_bands": [
+    {"min_score": 0.0, "green_time": 30.0},
+    {"min_score": 0.3, "green_time": 45.0},
+    {"min_score": 0.6, "green_time": 60.0}
+  ],
+  "min_green_time": 5.0,
+  "max_green_time": 60.0,
+  "yellow_duration": 3.0,
+  "starvation_limit": 3,
+  "default_frame_rate": 30.0,
+  "use_pce_weighting": true,
+  "pce_weights": {"bus": 3.0, "car": 1.0, "motorcycle": 0.5, "truck": 3.0},
+  "quit_key": "q",
+
+  "use_pce_queue": true,
+  "spillback_weight": 0.0,
+  "stopped_displacement": 2.0,
+  "use_discharge_green": true,
+  "saturation_flow_rate": 0.5,
+  "switching_margin": 0.0,
+  "green_rate_limit": 0.0,
+  "use_gap_out": true,
+
+  "use_forecast": true,
+  "forecast_weight": 0.4,
+  "forecast_horizon_seconds": 3.0,
+  "forecast_window_frames": 15
+}

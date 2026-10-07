@@ -1,0 +1,56 @@
+{
+  "alpha": 0.5,
+  "confidence_threshold": 0.3,
+  "model_path": "models/yolov8n.pt",
+  "track_buffer": 30,
+  "trajectory_length": 30,
+  "frame_size": [1280, 720],
+  "approaches": [
+    {
+      "name": "North",
+      "roi_polygon": [[440, 0], [840, 0], [840, 300], [440, 300]],
+      "queue_region": [[460, 200], [820, 200], [820, 290], [460, 290]],
+      "saturation_count": 12.0,
+      "queue_capacity": 8.0
+    },
+    {
+      "name": "East",
+      "roi_polygon": [[900, 240], [1240, 240], [1240, 480], [900, 480]],
+      "queue_region": [[910, 250], [1010, 250], [1010, 470], [910, 470]],
+      "saturation_count": 12.0,
+      "queue_capacity": 8.0
+    },
+    {
+      "name": "South",
+      "roi_polygon": [[440, 420], [840, 420], [840, 718], [440, 718]],
+      "queue_region": [[460, 430], [820, 430], [820, 520], [460, 520]],
+      "saturation_count": 12.0,
+      "queue_capacity": 8.0
+    },
+    {
+      "name": "West",
+      "roi_polygon": [[0, 240], [440, 240], [440, 480], [0, 480]],
+      "queue_region": [[320, 250], [438, 250], [438, 470], [320, 470]],
+      "saturation_count": 12.0,
+      "queue_capacity": 8.0
+    }
+  ],
+  "green_time_bands": [
+    {"min_score": 0.0, "green_time": 30.0},
+    {"min_score": 0.3, "green_time": 45.0},
+    {"min_score": 0.6, "green_time": 60.0}
+  ],
+  "min_green_time": 30.0,
+  "max_green_time": 60.0,
+  "yellow_duration": 3.0,
+  "starvation_limit": 3,
+  "default_frame_rate": 25.0,
+  "use_pce_weighting": false,
+  "pce_weights": {
+    "bus": 3.0,
+    "car": 1.0,
+    "motorcycle": 0.5,
+    "truck": 3.0
+  },
+  "quit_key": "q"
+}
