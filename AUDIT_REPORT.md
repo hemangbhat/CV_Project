@@ -140,10 +140,14 @@ statistical evidence of any effect.
 
 ### W6. Raza fidelity is a "Raza-style" baseline, and the base paper PDF is corrupt
 
-* S1 = PCE density with 30/45/60 s bands. Starvation here is a cycle counter; the repo's own literature
-  review says Raza's starvation guard is queue-based. Call S1 "Raza-style", never "reproduction".
-* `An_Edge-Deployed_...(1).pdf` in the repo **does not render** (broken flate streams; every page blank).
-  The Li et al. paper is not in the repo at all. Both must be fixed before submission.
+* S1 = PCE density with 30/45/60 s bands, against Raza's 40/60/120 s. Call S1 "Raza-style", never "reproduction".
+* *Corrected after reading a clean copy of the paper:* Raza's starvation guard is a **Green Denial
+  Counter** (consecutive cycles denied green, with a threshold), the same mechanism as this
+  project's `cycles_waited`, not a queue trigger as an earlier note claimed. Raza also multiplies
+  density by a lane-priority weight (left 3, right 2, through 1), which S1 does not, because the
+  camera's approaches are not split by turning lane. Raza evaluated the controller in SUMO via TraCI.
+* `An_Edge-Deployed_...(1).pdf` in the repo **did not render** (broken flate streams; every page blank),
+  and the Li et al. paper was missing. Both are now replaced with clean copies in `docs/papers/`.
 
 ### W7. The camera geometry does not define queues (found during the fixes)
 
@@ -174,7 +178,7 @@ contiguous queue tail; validated visually in `report/queue_tail_validation.png`.
 | W3 saturation regime absent | Scenarios up to and beyond capacity; saturating vs physical density normaliser as a factor | `sim/scenario.py` |
 | W4 n = 1 decision | 20 test seeds × 9 scenarios, paired CIs, protocol frozen before test runs | `sim/experiment.py` |
 | W5 noisy X/S | Windowed, box-height-normalised stopped test; contiguous queue tail; 2.5 s trend window | `src/traffic_metrics.py` |
-| W6 Raza fidelity / PDFs | S1 labelled "Raza-style"; corrupt PDF and missing Li paper flagged | `docs/papers/README.md` |
+| W6 Raza fidelity / PDFs | S1 labelled "Raza-style"; Raza facts checked against the paper; clean PDFs of all three papers added | `docs/papers/` |
 | W7 geometry | v2 geometry with drawn stop-line axes | `config/bellevue_116th_v2.json` |
 | Reproducibility | YOLO+ByteTrack track cache (exact replay), `lap` pinned, bytecode untracked | `src/track_cache.py` |
 | Clutter | legacy scripts/docs/logs archived with explanations | `scripts/legacy`, `docs/archive` |

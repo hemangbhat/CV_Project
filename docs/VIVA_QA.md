@@ -26,15 +26,32 @@ density, a rule-based controller, real deployment. It is also simple enough to e
 and its control rule has a clear, nameable limitation.
 
 **4. What exactly does Raza do?**
-A YOLO detector on an edge device counts vehicles per approach and weights them by
-Passenger Car Equivalent (bus ≈ several cars) into a density. The approach with the
-highest PCE density is served. Its green time comes from three bands (40/60/120 s for
-low/moderate/high density), and a Green-Denial Counter prevents starvation.
+A YOLO detector (YOLOv7-tiny / YOLOv8-nano on Jetson edge nodes) counts vehicles per
+approach. Density = Σ count × PCE (Eq. 1), multiplied by a lane-priority weight (left 3,
+right 2, through 1; Eq. 2). Algorithm 1:
+1. If any approach's Green Denial Counter (cycles denied green) exceeds a threshold, serve
+   it.
+2. Otherwise serve the highest weighted density.
+3. Give 120, 60 or 40 s of green for high, moderate or low density.
+4. Reset the served counter and increment the others.
+
+They evaluate in SUMO via TraCI and on real footage: up to 33% less congestion and 23% lower
+waiting time than fixed-time.
 
 **5. What is Raza's relevant limitation?**
-It is reactive: both the choice and the green length depend only on current density.
-It cannot tell a queue that is growing from one that is clearing, nor how far back the
-queue reaches.
+Be precise here. The limitations Raza *state* (§VI) are hardware and detection: power-aware
+edge nodes, online learning, label noise, multimodal fusion. The limitation I study is my own
+analysis of their Algorithm 1: it is reactive, because both the choice and the green length
+depend only on current density. It cannot tell a queue that is growing from one that is
+clearing, nor how far back the queue reaches. The T-ITS papers are what make that a
+recognised gap: Li models queue profiles and over-saturation, Wei predicts queue dynamics.
+
+**5b. How did Raza evaluate their controller, and how does yours compare?**
+In SUMO with TraCI on a four-way intersection, plus real footage, against fixed-time. I also
+evaluate closed-loop in SUMO, but with more controls: 10 controller variants, 9 demand
+scenarios, 20 paired seeds, a null control, and a pre-registered protocol. My S1 copies their
+rule (denial counter, density argmax, three bands) but not their lane-priority weights or
+their 40/60/120 s bands.
 
 **6. Why did you study T-ITS?**
 My professor asked for newer, higher-tier work on the limitation. Both assigned 2025
@@ -274,6 +291,14 @@ averages out box jitter.
 **"Why least squares and not a difference of two samples for the slope?"**
 A two-point difference amplifies jitter. Least squares over 75 frames averages it. The
 original 0.5 s window with a 5 s horizon multiplied noise by 10.
+
+**"Are there newer T-ITS papers that do what you tried?"**
+Mohajerpoor, Cai & Ramezani (T-ITS 24(1), 2023) control an isolated over-saturated junction
+using *predicted* demand and spillback probability, and they use the prediction to set the
+**cycle and splits**, i.e. timing. That matches my finding: in my test the green-time rule
+dominated, while adding prediction to the *selection score* changed almost nothing. For the
+measurement side, Zhu et al. (T-ITS, doi:10.1109/TITS.2024.3498012) estimate queue length from
+spatially sparse trajectories, which is exactly my far-field detection problem.
 
 **"Is S just X with extra noise?"**
 At decision time in the simulation, effectively yes: S4X (unprojected X) and S4 (projected

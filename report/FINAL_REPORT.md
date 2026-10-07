@@ -54,19 +54,28 @@ make better decisions?
 ## 2. Base paper: Raza et al. (2025)
 
 Raza et al., *IEEE Access* 13, 2025, doi:10.1109/ACCESS.2025.3602844. Their system uses
-a lightweight YOLO detector on a Jetson Xavier NX edge node and converts detections into
-a **PCE-weighted traffic density** (a bus counts as several cars). The controller serves
-the approach with the highest PCE density. Its green time comes from **three discrete
-bands** (40 / 60 / 120 s for low / moderate / high density), with a **Green-Denial
-Counter** that prevents an approach from being skipped indefinitely. They report up to
-33% less congestion and 23% lower waiting time than fixed-time control.
+a lightweight YOLO detector (YOLOv7-tiny / YOLOv8-nano, up to 90 mAP, 74 FPS) on Jetson
+edge nodes and converts detections into a **PCE-weighted traffic density**,
+`density = Σ count × PCE` (their Eq. 1). That density is then multiplied by a lane-priority
+weight (left 3, right 2, through 1; Eq. 2). The controller (their Algorithm 1) first checks
+a **Green Denial Counter**, the number of consecutive cycles an approach has been denied
+green: one over a threshold is served immediately. Otherwise it serves the highest
+weighted density, with green time from **three bands**: 120 / 60 / 40 s for high /
+moderate / low density. They evaluate the controller in **SUMO via TraCI** and with real
+footage, reporting up to 33% less congestion and 23% lower waiting time than fixed-time
+control. The limitations they state (§VI) are power-aware edge hardware, online/continual
+learning, label noise, and multimodal sensor fusion.
 
 **What we reproduce.** Our S1 baseline is *Raza-style*, not a reproduction. It uses the
-same rule (argmax of PCE density, three score bands, a starvation counter), but with
-bands scaled to 30 / 45 / 60 s, our own geometry, stock YOLOv8 and our own camera. Raza's
-detector, hardware and dataset are not reproduced.
+same rule: a green-denial (starvation) counter first, then argmax of PCE density with three
+score bands. But the bands are scaled to 30 / 45 / 60 s, there is no lane-priority weight
+(our camera's approaches are not split by turning lane), and the geometry, detector (stock
+YOLOv8) and camera are our own. Raza's detector, hardware and dataset are not reproduced.
+Like Raza, we evaluate the controller closed-loop in SUMO.
 
-**The limitation we study.** Selection and green time depend on *current* density only.
+**The limitation we study.** This is *our* analysis of the method; it is not among the
+limitations Raza et al. list, which concern hardware and detection. Selection and green time
+depend on *current* density only.
 Density counts vehicles in view. It does not say whether the queue is growing, how far
 back it reaches, or whether the approach is about to run out of storage.
 
@@ -306,8 +315,11 @@ informative. The saturation argument is correct: a count in a fixed region is bl
 growth beyond it, and a forecast of that count inherits the blindness. Spatial reach does
 recover that information. But a camera's view is itself a fixed region, so X inherits the
 same ceiling one level up. And in a one-approach-at-a-time junction the decision is a
-ranking that density already gets right in these scenarios. The predictive idea of Wei et
-al. pays off in their setting because the network model sees *downstream* storage. Local
+ranking that density already gets right in these scenarios. This agrees with Mohajerpoor, Cai & Ramezani
+(IEEE T-ITS 24(1), 2023), whose single-intersection controller for over-saturation uses
+*predicted* demand and spillback probability to set the **cycle length and splits**, i.e. the
+timing, not a selection score. The predictive idea of Wei et al. pays off in their setting
+because the network model sees *downstream* storage. Local
 storage risk measured on the inbound leg carries little information that inbound density
 does not. What *does* matter is timing: serving a queue until it has cleared and no longer
 (actuated), instead of fixed or score-banded durations. That points future work at
@@ -338,8 +350,11 @@ timing and at downstream visibility, not at more score terms.
 * **Use X for timing, not ranking.** For example, hold a green while the served approach's
   X is still shrinking at saturation flow. This is where the measurement could actually
   enter the decision.
-* **Better far-field detection.** Higher input resolution or tiling, and fine-tuning on
-  this camera; then repeat the queue-tail validation with hand-labelled ground truth.
+* **Better far-field detection, or estimation beyond it.** Higher input resolution or tiling,
+  and fine-tuning on this camera. Alternatively, treat the tracks as *spatially sparse
+  trajectories* and infer the queue tail beyond the last detected car, as in trajectory-based
+  queue estimation (Zhu et al., IEEE T-ITS, doi:10.1109/TITS.2024.3498012). Then repeat the
+  queue-tail validation with hand-labelled ground truth.
 * **Field-calibrated simulation.** Turning movements and arrival rates per approach from
   longer footage; more than one junction.
 
@@ -352,10 +367,12 @@ design decision each one led to.
 
 ## References
 
-1. A. Raza et al., "An Edge-Deployed Real-Time Adaptive Traffic Light Control System Using YOLO-Based Vehicle Detection and PCE-Aware Density Estimation," *IEEE Access*, vol. 13, 2025, doi:10.1109/ACCESS.2025.3602844.
-2. Li, Lu, Wang, "A Multi-Objective Model for Traffic Signal Coordination Control With Queue Profile Estimation," *IEEE Trans. Intell. Transp. Syst.*, vol. 26, no. 12, pp. 23389–23406, 2025, doi:10.1109/TITS.2025.3616119.
+1. M. Raza et al., "An Edge-Deployed Real-Time Adaptive Traffic Light Control System Using YOLO-Based Vehicle Detection and PCE-Aware Density Estimation," *IEEE Access*, vol. 13, 2025, doi:10.1109/ACCESS.2025.3602844.
+2. C. Li, Y. Lu, H. Wang, "A Multi-Objective Model for Traffic Signal Coordination Control With Queue Profile Estimation," *IEEE Trans. Intell. Transp. Syst.*, vol. 26, no. 12, pp. 23389–23406, 2025, doi:10.1109/TITS.2025.3616119.
 3. Wei, Ampountolas, Hirrle, Wang, "Hierarchical Predictive Control of Network Traffic Signals Using Link Transmission Model With Queue Dynamics," *IEEE Trans. Intell. Transp. Syst.*, vol. 26, no. 10, pp. 16391–16404, 2025, doi:10.1109/TITS.2025.3568869.
 4. Y. Zhang et al., "ByteTrack: Multi-Object Tracking by Associating Every Detection Box," *ECCV*, 2022.
 5. G. Jocher et al., Ultralytics YOLOv8, 2023, https://github.com/ultralytics/ultralytics.
 6. P. A. Lopez et al., "Microscopic Traffic Simulation using SUMO," *IEEE ITSC*, 2018.
 7. City of Bellevue, Traffic Video Dataset, https://github.com/City-of-Bellevue/TrafficVideoDataset.
+8. R. Mohajerpoor, C. Cai, M. Ramezani, "Optimal Traffic Signal Control of Isolated Oversaturated Intersections Using Predicted Demand," *IEEE Trans. Intell. Transp. Syst.*, vol. 24, no. 1, pp. 815–826, 2023.
+9. J. Zhu et al., "Cycle-by-Cycle Estimation of Queue Length at Signalized Intersections Using Spatially Sparse Connected Vehicle Trajectories," *IEEE Trans. Intell. Transp. Syst.*, doi:10.1109/TITS.2024.3498012.
