@@ -178,6 +178,8 @@ class Pipeline:
         display: bool = False,
         window_name: str = CONTROL_WINDOW_NAME,
         log_path: str | None = None,
+        overlay_style: str = "classic",
+        max_frames: int = 0,
     ) -> None:
         self._video_path = str(video_path)
         self._config = config
@@ -196,6 +198,8 @@ class Pipeline:
         self._display = display
         self._window_name = window_name
         self._log_path = log_path
+        self._overlay_style = overlay_style
+        self._max_frames = int(max_frames)
 
     @property
     def controller_name(self) -> str:
@@ -211,7 +215,7 @@ class Pipeline:
         tracker = self._tracker if self._tracker is not None else ByteTrackTracker(config)
         assigner = ApproachAssigner(config)
         engine = MetricsEngine(config)
-        overlay = SignalOverlay(config)
+        overlay = SignalOverlay(config, style=self._overlay_style)
         sequencer = PhaseSequencer(self._controller, config, info.frame_rate)
         # E8: the short-term queue forecaster, built only when enabled so a base run
         # constructs nothing extra. When present it augments each frame's metrics
@@ -302,6 +306,8 @@ class Pipeline:
 
                 if self._display and self._show(annotated, delay_ms) in quit_codes:
                     quit_early = True
+                    break
+                if self._max_frames and frames_processed >= self._max_frames:
                     break
         finally:
             if writer is not None:
@@ -494,6 +500,19 @@ def build_parser() -> argparse.ArgumentParser:
             "the detector (see the cache-tracks command); guarantees identical vision "
             "input across ablation stages"
         ),
+    )
+    control_parser.add_argument(
+        "--overlay",
+        default="classic",
+        choices=["classic", "demo"],
+        help="classic: requirement overlay; demo: research dashboard with D, Q, X, S, F, "
+             "score and the measured queue tail drawn on each approach",
+    )
+    control_parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=0,
+        help="stop after this many frames (0 = whole video); for short demo clips",
     )
     control_parser.set_defaults(write_video=True)
     _add_common_arguments(control_parser)
@@ -738,6 +757,8 @@ def _run_control(args: argparse.Namespace) -> int:
         out_path=args.out,
         write_video=args.write_video,
         display=args.display,
+        overlay_style=args.overlay,
+        max_frames=args.max_frames,
     )
     result = pipeline.run()
     info = result.info
