@@ -134,6 +134,40 @@ statistical evidence of any effect.
 * `An_Edge-Deployed_...(1).pdf` in the repo **does not render** (broken flate streams; every page blank).
   The Li et al. paper is not in the repo at all. Both must be fixed before submission.
 
+### W7. The camera geometry does not define queues (found during the fixes)
+
+When the measurement noise of W5 was removed, queue reach on the original geometry fell to
+~0 on every approach. Investigation (`python audit/measurement_compare.py`, frames in
+`report/geometry_v2.png`) showed why:
+
+* The ROIs do not correspond to single inbound approaches: "North" is a strip spanning two
+  different legs of the (fisheye) junction, and West/South cover both travel directions.
+* The queue regions are inset copies of the ROIs, not strips at a stop line, so nothing in
+  the configuration says where a queue starts; queued vehicles sit at axis fractions 0.2-0.9.
+* The motion-calibrated axes for **North and West point the wrong way** (outbound and cross
+  traffic dominate the entry/exit votes on an ROI that covers both directions).
+
+So legacy queue-reach values were largely "where in the ROI some stopped vehicle is", not a
+queue extent measured from a stop line. Fixed by `config/bellevue_116th_v2.json`
+(inbound-lane ROIs, stop-line strips, drawn `queue_axis` polylines) and a box-height-scaled
+contiguous queue tail; validated visually in `report/queue_tail_validation.png`.
+
+---
+
+## Status of fixes (updated as work proceeds)
+
+| Finding | Fix | Where |
+|---|---|---|
+| W1 open-loop metric invalid | Closed-loop SUMO evaluation; open-loop video kept for measurement and decision analysis only | `sim/`, `sim/PROTOCOL.md` |
+| W2 renormalisation confound | NULL, S4X, S3S, S3X control arms; common actuated timing so score scale cannot set green length | `sim/closed_loop.py` |
+| W3 saturation regime absent | Scenarios up to and beyond capacity; saturating vs physical density normaliser as a factor | `sim/scenario.py` |
+| W4 n = 1 decision | 20 test seeds × 9 scenarios, paired CIs, protocol frozen before test runs | `sim/experiment.py` |
+| W5 noisy X/S | Windowed, box-height-normalised stopped test; contiguous queue tail; 2.5 s trend window | `src/traffic_metrics.py` |
+| W6 Raza fidelity / PDFs | S1 labelled "Raza-style"; corrupt PDF and missing Li paper flagged | `docs/papers/README.md` |
+| W7 geometry | v2 geometry with drawn stop-line axes | `config/bellevue_116th_v2.json` |
+| Reproducibility | YOLO+ByteTrack track cache (exact replay), `lap` pinned, bytecode untracked | `src/track_cache.py` |
+| Clutter | legacy scripts/docs/logs archived with explanations | `scripts/legacy`, `docs/archive` |
+
 ---
 
 ## 3. What is missing
