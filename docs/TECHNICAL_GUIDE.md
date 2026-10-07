@@ -184,7 +184,7 @@ moved < 2 px since the *previous frame*. That has two flaws:
 
 Dividing by box height makes the threshold "a fifth of the vehicle's own length per
 second". For a 5 m car that is about 1 m/s, which matches the traffic-engineering notion
-of stopped. Measured effect: stops per vehicle on the busy clip fell from 4.28 to 0.76.
+of stopped. Measured effect: stops per vehicle on the busy clip fell from 4.28 to 0.74.
 
 ## 9. Spatial queue reach X
 

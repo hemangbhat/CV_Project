@@ -286,7 +286,7 @@ junction and clip length do not provide.
 
 ## 7. Extensions derived from the two IEEE TITS papers
 
-Two 2025 IEEE TITS papers were assigned for limitation analysis. Both are
+Two 2025 IEEE TITS papers were selected for limitation analysis. Both are
 network-scale, optimisation-based, simulation-only controllers, and both argue the
 same core point: **queue length must be estimated as a variable, not fixed or
 inferred as an afterthought.** That is the axis this project's controller was
