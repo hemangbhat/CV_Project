@@ -57,6 +57,12 @@ class ApproachConfig:
     # mean resultant length, 0..1). Reported by the calibration and carried here so the
     # axis can expose how much to trust its own direction.
     axis_confidence: float = 1.0
+    # Drawn queue axis (audit fix W7): a polyline from the STOP LINE back along the
+    # inbound lanes to the far end of the visible storage, in image pixels. When given it
+    # defines the reach axis outright - origin at the stop line, arc length along the
+    # (possibly curved, fisheye) road - and takes precedence over ``axis_direction`` and
+    # the centroid geometry, neither of which knows where the stop line is.
+    queue_axis: Polygon | None = None
 
 
 @dataclass(frozen=True)
@@ -166,6 +172,29 @@ class Config:
     use_spillback_risk: bool = False
     spillback_risk_weight: float = 0.0      # rho in 0..1
     risk_horizon_seconds: float = 5.0       # > 0
+    # --- Robust queue measurement (audit fix, see AUDIT_REPORT.md W5) ------------
+    # ``stopped_window_seconds`` > 0 replaces the per-frame "moved < stopped_displacement
+    # px since the previous frame" test with a speed test over a time window, measured
+    # in bounding-box heights per second so a distant (small) vehicle and a near
+    # (large) one are judged on the same physical scale. 0 keeps the legacy test.
+    # ``stopped_speed_ratio`` is that threshold: below it a vehicle counts as stopped.
+    # ``queue_tail_gap`` > 0 makes queue reach the tail of the CONTIGUOUS chain of
+    # stopped vehicles that starts at the stop line (consecutive stopped vehicles no
+    # more than this axis fraction apart), so an isolated stopped box far upstream
+    # cannot set the reach. 0 keeps the legacy "furthest stopped vehicle" reach.
+    # Passage time for E6 gap-out: the Queue_Region must stay empty this long before a
+    # green is ended early. 0 keeps the legacy rule (end on the first empty frame), which
+    # gaps out mid-discharge whenever moving vehicles happen to leave a gap in the region.
+    gap_out_seconds: float = 0.0            # >= 0
+    stopped_window_seconds: float = 0.0     # >= 0, 0 = legacy per-frame test
+    stopped_speed_ratio: float = 0.2        # > 0, box heights per second
+    queue_tail_gap: float = 0.0             # 0..1, 0 = legacy max reach
+    # Perspective-scaled form of the same rule, for video: consecutive stopped vehicles
+    # belong to one queue when they are at most this many VEHICLE LENGTHS apart along the
+    # queue axis (a vehicle's length = its box's extent along the local road direction), and a chain may start at any stopped vehicle inside the Queue_Region.
+    # A fixed axis fraction cannot work on a fisheye view, where one car near the camera
+    # spans half the axis and one far away a few percent. > 0 overrides queue_tail_gap.
+    queue_tail_gap_boxes: float = 0.0       # >= 0, 0 = use queue_tail_gap
 
     def approach(self, name: str) -> ApproachConfig:
         """Return the Approach configuration named ``name``."""
@@ -274,6 +303,11 @@ def _approach_from_json_obj(obj: Mapping[str, Any]) -> ApproachConfig:
         axis_confidence=_as_float(
             obj.get("axis_confidence", 1.0), f"{where} axis_confidence"
         ),
+        queue_axis=(
+            _as_polygon(obj["queue_axis"], f"{where} queue_axis")
+            if obj.get("queue_axis") is not None
+            else None
+        ),
     )
 
 
@@ -315,6 +349,8 @@ def _approach_to_json_obj(approach: ApproachConfig) -> dict[str, Any]:
             float(approach.axis_direction[1]),
         ]
         payload["axis_confidence"] = float(approach.axis_confidence)
+    if approach.queue_axis is not None:
+        payload["queue_axis"] = _polygon_to_json(approach.queue_axis)
     return payload
 
 
@@ -428,6 +464,11 @@ def from_json_obj(obj: Mapping[str, Any]) -> Config:
         use_spillback_risk=_optional_bool(obj, "use_spillback_risk", False),
         spillback_risk_weight=_optional_float(obj, "spillback_risk_weight", 0.0),
         risk_horizon_seconds=_optional_float(obj, "risk_horizon_seconds", 5.0),
+        gap_out_seconds=_optional_float(obj, "gap_out_seconds", 0.0),
+        stopped_window_seconds=_optional_float(obj, "stopped_window_seconds", 0.0),
+        stopped_speed_ratio=_optional_float(obj, "stopped_speed_ratio", 0.2),
+        queue_tail_gap=_optional_float(obj, "queue_tail_gap", 0.0),
+        queue_tail_gap_boxes=_optional_float(obj, "queue_tail_gap_boxes", 0.0),
     )
 
 
@@ -473,6 +514,11 @@ def to_json_obj(config: Config) -> dict[str, Any]:
         "use_spillback_risk": config.use_spillback_risk,
         "spillback_risk_weight": config.spillback_risk_weight,
         "risk_horizon_seconds": config.risk_horizon_seconds,
+        "gap_out_seconds": config.gap_out_seconds,
+        "stopped_window_seconds": config.stopped_window_seconds,
+        "stopped_speed_ratio": config.stopped_speed_ratio,
+        "queue_tail_gap": config.queue_tail_gap,
+        "queue_tail_gap_boxes": config.queue_tail_gap_boxes,
     }
 
 
@@ -578,6 +624,18 @@ def _validate_approaches(config: Config) -> None:
                     f"({vertex[0]}, {vertex[1]}) lies outside its parent roi_polygon"
                 )
 
+        if approach.queue_axis is not None:
+            if len(approach.queue_axis) < 2:
+                raise ConfigError(f"{where} queue_axis needs at least 2 points (stop line, far end)")
+            for index, (x, y) in enumerate(approach.queue_axis):
+                if any(isinstance(v, bool) or not isinstance(v, int) for v in (x, y)):
+                    raise ConfigError(f"{where} queue_axis point {index} must be integer pixels")
+            total = sum(
+                math.hypot(b[0] - a[0], b[1] - a[1])
+                for a, b in zip(approach.queue_axis, approach.queue_axis[1:])
+            )
+            if total <= 0.0:
+                raise ConfigError(f"{where} queue_axis has zero length")
         _check_finite(approach.axis_confidence, f"{where} axis_confidence")
         if not (0.0 <= approach.axis_confidence <= 1.0):
             raise ConfigError(
@@ -705,6 +763,38 @@ def _validate(config: Config) -> None:
     _check_int_at_least(config.forecast_window_frames, "forecast_window_frames", 2)
 
     _check_positive(config.stopped_displacement, "stopped_displacement")
+    _check_positive(config.stopped_speed_ratio, "stopped_speed_ratio")
+    if (
+        isinstance(config.gap_out_seconds, bool)
+        or not isinstance(config.gap_out_seconds, (int, float))
+        or not math.isfinite(config.gap_out_seconds)
+        or config.gap_out_seconds < 0.0
+    ):
+        raise ConfigError(
+            f"configuration field 'gap_out_seconds' must be a finite number >= 0, "
+            f"got {config.gap_out_seconds!r}"
+        )
+    _check_in_unit_range(config.queue_tail_gap, "queue_tail_gap")
+    if (
+        isinstance(config.queue_tail_gap_boxes, bool)
+        or not isinstance(config.queue_tail_gap_boxes, (int, float))
+        or not math.isfinite(config.queue_tail_gap_boxes)
+        or config.queue_tail_gap_boxes < 0.0
+    ):
+        raise ConfigError(
+            f"configuration field 'queue_tail_gap_boxes' must be a finite number >= 0, "
+            f"got {config.queue_tail_gap_boxes!r}"
+        )
+    if (
+        isinstance(config.stopped_window_seconds, bool)
+        or not isinstance(config.stopped_window_seconds, (int, float))
+        or not math.isfinite(config.stopped_window_seconds)
+        or config.stopped_window_seconds < 0.0
+    ):
+        raise ConfigError(
+            f"configuration field 'stopped_window_seconds' must be a finite number >= 0 "
+            f"(0 meaning the legacy per-frame test), got {config.stopped_window_seconds!r}"
+        )
     _check_positive(config.saturation_flow_rate, "saturation_flow_rate")
     # 0.0 means unbounded, so this is a floor of 0 rather than a positivity check.
     if (

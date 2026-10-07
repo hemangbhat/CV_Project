@@ -973,6 +973,137 @@ def draw_queue_markers_on(
     return frame
 
 
+# ---------------------------------------------------------------------------
+# Research demo layer: the measurements the controller actually reads
+# ---------------------------------------------------------------------------
+
+#: Top-left corner of the demo dashboard. On the Bellevue camera this is trees and a
+#: building roof, so the panel hides no road.
+DEMO_PANEL_ORIGIN = (8, 8)
+DEMO_ROW_HEIGHT = 22
+DEMO_COLUMNS = ("leg", "sig", "n", "D", "Q", "X", "S", "F", "score")
+_DEMO_COLUMN_X = (8, 70, 96, 120, 160, 200, 270, 340, 380)
+_SIGNAL_GLYPH = {"GREEN": ("G", (0, 200, 0)), "YELLOW": ("Y", (0, 215, 255)), "RED": ("R", (0, 0, 220))}
+
+
+def _axis_point(axis, fraction: float) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Image point at ``fraction`` along a drawn queue axis, and the axis normal there."""
+    segments = getattr(axis, "_polyline", None)
+    if not segments:
+        ux, uy = axis.upstream
+        d = fraction * axis.length
+        return (axis.origin[0] + ux * d, axis.origin[1] + uy * d), (-uy, ux)
+    target = fraction * axis.length
+    for ax, ay, ux, uy, seg, start in segments:
+        if target <= start + seg:
+            t = target - start
+            return (ax + ux * t, ay + uy * t), (-uy, ux)
+    ax, ay, ux, uy, seg, _ = segments[-1]
+    return (ax + ux * seg, ay + uy * seg), (-uy, ux)
+
+
+def draw_queue_tails_on(frame: np.ndarray, axes: Mapping[str, object], metrics: Mapping[str, ApproachMetrics]) -> np.ndarray:
+    """Draw each queue axis and a red bar at its measured queue reach X, in place."""
+    for name, axis in axes.items():
+        segments = getattr(axis, "_polyline", None)
+        if segments:
+            points = [(int(a), int(b)) for a, b, *_ in segments]
+            last = segments[-1]
+            points.append((int(last[0] + last[2] * last[4]), int(last[1] + last[3] * last[4])))
+            cv2.polylines(frame, [np.array(points, np.int32)], False, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.circle(frame, points[0], 4, (0, 0, 255), -1, cv2.LINE_AA)
+        m = metrics.get(name)
+        if m is None or m.queue_reach <= 0.0:
+            continue
+        (px, py), (nx, ny) = _axis_point(axis, m.queue_reach)
+        cv2.line(frame, (int(px - 22 * nx), int(py - 22 * ny)), (int(px + 22 * nx), int(py + 22 * ny)),
+                 (0, 0, 255), 4, cv2.LINE_AA)
+    return frame
+
+
+def demo_panel_rows(
+    metrics: Mapping[str, ApproachMetrics],
+    scores: Mapping[str, float],
+    signal_states: Mapping[str, object],
+) -> list[tuple[str, ...]]:
+    """The dashboard rows as text cells, in Approach order (also used by tests)."""
+    rows = []
+    for name in APPROACH_NAMES:
+        m = metrics.get(name)
+        if m is None:
+            continue
+        state = getattr(signal_states.get(name), "value", signal_states.get(name, "RED"))
+        rows.append((
+            name, str(state)[0], str(m.vehicle_count), f"{m.vehicle_density:.2f}",
+            f"{m.normalized_queue:.2f}", f"{m.queue_reach:.2f}", f"{m.spillback_risk:.2f}",
+            f"{m.normalized_forecast:.2f}", f"{float(scores.get(name, 0.0)):.2f}",
+        ))
+    return rows
+
+
+def draw_demo_panel_on(
+    frame: np.ndarray,
+    metrics: Mapping[str, ApproachMetrics],
+    scores: Mapping[str, float],
+    signal_states: Mapping[str, object],
+    phase_info: object,
+    controller_name: str,
+    simulated_time: float,
+) -> np.ndarray:
+    """Draw the research dashboard in place.
+
+    Shows, per Approach, exactly the measurements the Score is built from (D density,
+    Q queue, X queue reach, S spillback risk, F count forecast) with bars for the two
+    spatial terms, the Score itself, and the signal; the served Approach is
+    highlighted and the header states the phase and its remaining green.
+    """
+    x0, y0 = DEMO_PANEL_ORIGIN
+    rows = demo_panel_rows(metrics, scores, signal_states)
+    width, height = 420, DEMO_ROW_HEIGHT * (len(rows) + 4) + 8
+    roi = frame[y0:y0 + height, x0:x0 + width]
+    roi[:] = (roi * 0.35).astype(roi.dtype)
+
+    active = getattr(phase_info, "approach", None)
+    state = getattr(getattr(phase_info, "state", None), "value", "")
+    remaining = float(getattr(phase_info, "remaining_seconds", 0.0))
+    green = float(getattr(phase_info, "green_time", 0.0))
+    font, scale = cv2.FONT_HERSHEY_SIMPLEX, 0.45
+    cv2.putText(frame, f"{controller_name}   t = {simulated_time:6.1f} s", (x0 + 8, y0 + 18),
+                font, scale, (255, 255, 255), 1, cv2.LINE_AA)
+    if active:
+        cv2.putText(frame, f"{state} {active}: {remaining:4.1f} s left of {green:.0f} s",
+                    (x0 + 8, y0 + 18 + DEMO_ROW_HEIGHT), font, scale, (0, 255, 255), 1, cv2.LINE_AA)
+
+    y = y0 + 18 + 2 * DEMO_ROW_HEIGHT
+    for cx, title in zip(_DEMO_COLUMN_X, DEMO_COLUMNS):
+        cv2.putText(frame, title, (x0 + cx, y), font, scale, (200, 200, 200), 1, cv2.LINE_AA)
+    best = max(scores, key=lambda n: scores[n]) if scores else None
+    for row in rows:
+        y += DEMO_ROW_HEIGHT
+        name = row[0]
+        if name == active:
+            cv2.rectangle(frame, (x0 + 2, y - 15), (x0 + width - 4, y + 6), (60, 90, 60), -1)
+        state_value = getattr(signal_states.get(name), "value", str(signal_states.get(name)))
+        cell_colors = [approach_color(name), _SIGNAL_GLYPH.get(state_value, ("", (255, 255, 255)))[1]]
+        for i, (cx, cell) in enumerate(zip(_DEMO_COLUMN_X, row)):
+            text_color = cell_colors[i] if i < 2 else (255, 255, 255)
+            cv2.putText(frame, cell, (x0 + cx, y), font, scale, text_color, 1, cv2.LINE_AA)
+        # bars for X and S (the spatial measures)
+        for col, value in ((5, float(row[5])), (6, float(row[6]))):
+            bx = x0 + _DEMO_COLUMN_X[col] + 36
+            cv2.rectangle(frame, (bx, y - 10), (bx + 28, y - 2), (90, 90, 90), 1)
+            cv2.rectangle(frame, (bx, y - 10), (bx + int(28 * value), y - 2),
+                          (0, 0, 255) if col == 6 else (0, 165, 255), -1)
+        if name == best:
+            cv2.putText(frame, "*", (x0 + width - 12, y), font, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+    y += DEMO_ROW_HEIGHT
+    cv2.putText(frame, "D density  Q queue  X queue reach (spatial)", (x0 + 8, y),
+                font, 0.4, (200, 200, 200), 1, cv2.LINE_AA)
+    cv2.putText(frame, "S spillback risk  F count forecast  * highest score", (x0 + 8, y + 16),
+                font, 0.4, (200, 200, 200), 1, cv2.LINE_AA)
+    return frame
+
+
 class SignalOverlay:
     """The full draw stack of one run (Requirements 3.6, 12.1-12.5, 12.7).
 
@@ -997,8 +1128,16 @@ class SignalOverlay:
     so drawing stays a pure frame transformation.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, style: str = "classic") -> None:
+        if style not in ("classic", "demo"):
+            raise ValueError(f"overlay style must be 'classic' or 'demo', got {style!r}")
         self._config = config
+        self._style = style
+        self._axes = None
+        if style == "demo":
+            from src.lane_analysis import build_approach_axes
+
+            self._axes = build_approach_axes(config)
 
     @property
     def config(self) -> Config:
@@ -1021,6 +1160,13 @@ class SignalOverlay:
     ) -> np.ndarray:
         """Return a new frame carrying the complete overlay for one frame."""
         annotated = frame.copy()
+        if self._style == "demo":
+            draw_regions_on(annotated, self._config, labels=False)
+            draw_tracks_on(annotated, tracks, trajectories=trajectories)
+            draw_queue_tails_on(annotated, self._axes or {}, metrics)
+            draw_demo_panel_on(annotated, metrics, scores, signal_states, phase_info,
+                               controller_name, simulated_time)
+            return annotated
         draw_regions_on(annotated, self._config)
         draw_tracks_on(annotated, tracks, trajectories=trajectories)
         draw_queue_markers_on(annotated, assigned)

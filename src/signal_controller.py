@@ -665,6 +665,13 @@ class PhaseSequencer:
         # A queue at or below this PCE is treated as cleared. Small rather than zero
         # so floating-point queue magnitudes that ought to be empty read as empty.
         self._clear_epsilon = 1e-9
+        # Passage time: how many consecutive empty frames end a green early. 1 frame is
+        # the legacy rule; ``gap_out_seconds`` > 0 requires the region to stay empty.
+        gap_seconds = float(getattr(config, "gap_out_seconds", 0.0))
+        self._gap_frames = (
+            duration_to_frames(gap_seconds, self._frame_rate) if gap_seconds > 0.0 else 1
+        )
+        self._empty_since: int | None = None
         # The per-Approach queue demand (PCE) from the most recent tick, i.e. the
         # queue as it stood one frame before now. Read to time gap-out/extension and
         # to record the queue at the moment a green ends.
@@ -988,12 +995,19 @@ class PhaseSequencer:
         max_end = start + self._max_green_frames
 
         if queue <= self._clear_epsilon:
-            # Cleared: end at the current frame, but never before the minimum green.
+            if self._empty_since is None or self._empty_since < start:
+                self._empty_since = frame_index
+            if frame_index - self._empty_since + 1 < self._gap_frames:
+                return
+            # Cleared for the passage time: end at the current frame, but never before
+            # the minimum green.
             new_end = max(min_end, frame_index)
             if new_end < self._phase_end_frame:
                 self._resize_green(green, start, new_end)
                 green.gapped_out = True
-        elif self._phase_end_frame < max_end:
+            return
+        self._empty_since = None
+        if self._phase_end_frame < max_end:
             # Not cleared and near the assigned end: hold it open one more frame,
             # capped at the maximum green. The guard keeps this inert early in the
             # green, where frame_index + 1 is still well before the assigned end.

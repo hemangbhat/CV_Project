@@ -1,0 +1,323 @@
+{
+  "_comment": [
+    "FINAL ARM S3S: spatial risk in place of F (0.7B+0.3S)",
+    "Inherits config/bellevue_116th_v2.json; only the score weights differ."
+  ],
+  "alpha": 0.5,
+  "confidence_threshold": 0.3,
+  "model_path": "models/yolov8m.pt",
+  "track_buffer": 30,
+  "trajectory_length": 30,
+  "approaches": [
+    {
+      "name": "North",
+      "roi_polygon": [
+        [
+          432,
+          205
+        ],
+        [
+          590,
+          163
+        ],
+        [
+          555,
+          112
+        ],
+        [
+          468,
+          42
+        ],
+        [
+          438,
+          42
+        ]
+      ],
+      "queue_region": [
+        [
+          436,
+          200
+        ],
+        [
+          588,
+          163
+        ],
+        [
+          568,
+          132
+        ],
+        [
+          440,
+          160
+        ]
+      ],
+      "saturation_count": 12.0,
+      "queue_capacity": 4.0,
+      "queue_axis": [
+        [
+          510,
+          183
+        ],
+        [
+          478,
+          105
+        ],
+        [
+          455,
+          45
+        ]
+      ]
+    },
+    {
+      "name": "East",
+      "roi_polygon": [
+        [
+          792,
+          150
+        ],
+        [
+          965,
+          213
+        ],
+        [
+          1045,
+          105
+        ],
+        [
+          1010,
+          92
+        ],
+        [
+          950,
+          108
+        ],
+        [
+          862,
+          122
+        ],
+        [
+          785,
+          138
+        ]
+      ],
+      "queue_region": [
+        [
+          792,
+          150
+        ],
+        [
+          965,
+          213
+        ],
+        [
+          985,
+          186
+        ],
+        [
+          830,
+          135
+        ]
+      ],
+      "saturation_count": 10.0,
+      "queue_capacity": 4.0,
+      "queue_axis": [
+        [
+          878,
+          182
+        ],
+        [
+          950,
+          148
+        ],
+        [
+          1025,
+          102
+        ]
+      ]
+    },
+    {
+      "name": "South",
+      "roi_polygon": [
+        [
+          1045,
+          450
+        ],
+        [
+          1105,
+          415
+        ],
+        [
+          1240,
+          560
+        ],
+        [
+          1279,
+          600
+        ],
+        [
+          1279,
+          719
+        ],
+        [
+          1100,
+          719
+        ],
+        [
+          1060,
+          600
+        ],
+        [
+          1035,
+          500
+        ]
+      ],
+      "queue_region": [
+        [
+          1045,
+          450
+        ],
+        [
+          1105,
+          415
+        ],
+        [
+          1150,
+          465
+        ],
+        [
+          1062,
+          525
+        ]
+      ],
+      "saturation_count": 6.0,
+      "queue_capacity": 2.0,
+      "queue_axis": [
+        [
+          1075,
+          435
+        ],
+        [
+          1110,
+          560
+        ],
+        [
+          1160,
+          712
+        ]
+      ]
+    },
+    {
+      "name": "West",
+      "roi_polygon": [
+        [
+          0,
+          505
+        ],
+        [
+          185,
+          437
+        ],
+        [
+          290,
+          400
+        ],
+        [
+          440,
+          660
+        ],
+        [
+          420,
+          710
+        ],
+        [
+          0,
+          710
+        ]
+      ],
+      "queue_region": [
+        [
+          225,
+          428
+        ],
+        [
+          290,
+          400
+        ],
+        [
+          440,
+          660
+        ],
+        [
+          355,
+          690
+        ]
+      ],
+      "saturation_count": 12.0,
+      "queue_capacity": 4.0,
+      "queue_axis": [
+        [
+          365,
+          530
+        ],
+        [
+          0,
+          640
+        ]
+      ]
+    }
+  ],
+  "green_time_bands": [
+    {
+      "min_score": 0.0,
+      "green_time": 30.0
+    },
+    {
+      "min_score": 0.3,
+      "green_time": 45.0
+    },
+    {
+      "min_score": 0.6,
+      "green_time": 60.0
+    }
+  ],
+  "min_green_time": 30.0,
+  "max_green_time": 60.0,
+  "yellow_duration": 3.0,
+  "starvation_limit": 3,
+  "default_frame_rate": 30.0,
+  "use_pce_weighting": true,
+  "pce_weights": {
+    "bus": 3.0,
+    "car": 1.0,
+    "motorcycle": 0.5,
+    "truck": 3.0
+  },
+  "quit_key": "q",
+  "frame_size": [
+    1280,
+    720
+  ],
+  "use_predictive": false,
+  "predictive_weight": 0.0,
+  "use_pce_queue": false,
+  "spillback_weight": 0.0,
+  "stopped_displacement": 2.0,
+  "use_discharge_green": false,
+  "saturation_flow_rate": 0.5,
+  "switching_margin": 0.0,
+  "green_rate_limit": 0.0,
+  "use_gap_out": false,
+  "use_forecast": false,
+  "forecast_weight": 0.0,
+  "forecast_horizon_seconds": 3.0,
+  "forecast_window_frames": 75,
+  "use_queue_reach": false,
+  "queue_reach_weight": 0.0,
+  "use_spillback_risk": true,
+  "spillback_risk_weight": 0.3,
+  "risk_horizon_seconds": 5.0,
+  "stopped_window_seconds": 1.0,
+  "stopped_speed_ratio": 0.2,
+  "queue_tail_gap": 0.0,
+  "queue_tail_gap_boxes": 2.0
+}

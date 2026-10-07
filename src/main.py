@@ -70,6 +70,7 @@ from src.signal_controller import (
     FixedTimeController,
     PhaseSequencer,
 )
+from src.track_cache import CachedTracker, RecordingTracker, default_cache_path
 from src.tracking import ByteTrackTracker, Tracker
 from src.traffic_metrics import (
     ApproachMetrics,
@@ -177,6 +178,8 @@ class Pipeline:
         display: bool = False,
         window_name: str = CONTROL_WINDOW_NAME,
         log_path: str | None = None,
+        overlay_style: str = "classic",
+        max_frames: int = 0,
     ) -> None:
         self._video_path = str(video_path)
         self._config = config
@@ -195,6 +198,8 @@ class Pipeline:
         self._display = display
         self._window_name = window_name
         self._log_path = log_path
+        self._overlay_style = overlay_style
+        self._max_frames = int(max_frames)
 
     @property
     def controller_name(self) -> str:
@@ -210,7 +215,7 @@ class Pipeline:
         tracker = self._tracker if self._tracker is not None else ByteTrackTracker(config)
         assigner = ApproachAssigner(config)
         engine = MetricsEngine(config)
-        overlay = SignalOverlay(config)
+        overlay = SignalOverlay(config, style=self._overlay_style)
         sequencer = PhaseSequencer(self._controller, config, info.frame_rate)
         # E8: the short-term queue forecaster, built only when enabled so a base run
         # constructs nothing extra. When present it augments each frame's metrics
@@ -301,6 +306,8 @@ class Pipeline:
 
                 if self._display and self._show(annotated, delay_ms) in quit_codes:
                     quit_early = True
+                    break
+                if self._max_frames and frames_processed >= self._max_frames:
                     break
         finally:
             if writer is not None:
@@ -484,8 +491,44 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="do not write an annotated video, only the run log",
     )
+    control_parser.add_argument(
+        "--track-cache",
+        default=None,
+        metavar="PATH",
+        help=(
+            "replay recorded YOLO+ByteTrack output from this cache instead of running "
+            "the detector (see the cache-tracks command); guarantees identical vision "
+            "input across ablation stages"
+        ),
+    )
+    control_parser.add_argument(
+        "--overlay",
+        default="classic",
+        choices=["classic", "demo"],
+        help="classic: requirement overlay; demo: research dashboard with D, Q, X, S, F, "
+             "score and the measured queue tail drawn on each approach",
+    )
+    control_parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=0,
+        help="stop after this many frames (0 = whole video); for short demo clips",
+    )
     control_parser.set_defaults(write_video=True)
     _add_common_arguments(control_parser)
+
+    cache_parser = subparsers.add_parser(
+        "cache-tracks",
+        help="run YOLO+ByteTrack once over a video and record its tracks for replay",
+    )
+    cache_parser.add_argument("--video", required=True, metavar="PATH", help="input video file")
+    cache_parser.add_argument(
+        "--out",
+        default=None,
+        metavar="PATH",
+        help="cache file (default: results/track_cache/<video>__<model>__c<conf>.json.gz)",
+    )
+    _add_common_arguments(cache_parser)
 
     calibrate_parser = subparsers.add_parser(
         "calibrate-axes",
@@ -701,7 +744,11 @@ def _run_control(args: argparse.Namespace) -> int:
     patching ``ByteTrackTracker`` in this module.
     """
     config = load_config(args.config)
-    tracker = ByteTrackTracker(config)
+    tracker: Tracker = (
+        CachedTracker(args.track_cache, config)
+        if args.track_cache
+        else ByteTrackTracker(config)
+    )
     pipeline = Pipeline(
         args.video,
         config,
@@ -710,6 +757,8 @@ def _run_control(args: argparse.Namespace) -> int:
         out_path=args.out,
         write_video=args.write_video,
         display=args.display,
+        overlay_style=args.overlay,
+        max_frames=args.max_frames,
     )
     result = pipeline.run()
     info = result.info
@@ -758,6 +807,28 @@ def _run_control(args: argparse.Namespace) -> int:
         )
     if result.quit_early:
         print(f"note           : stopped early on the quit key {config.quit_key!r}")
+    return 0
+
+
+def _run_cache_tracks(args: argparse.Namespace) -> int:
+    """Run the real tracker once over a video and save its per-frame output."""
+    config = load_config(args.config)
+    recorder = RecordingTracker(ByteTrackTracker(config), config, args.video)
+    ingestor = VideoIngestor(args.video, config)
+    started = time.perf_counter()
+    try:
+        for _index, frame in ingestor.frames():
+            recorder.update(frame, [])
+    finally:
+        ingestor.close()
+        recorder.close()
+    out = args.out or default_cache_path(args.video, config)
+    recorder.save(out)
+    elapsed = time.perf_counter() - started
+    print(f"video          : {args.video}")
+    print(f"frames cached  : {recorder.frames_recorded}")
+    print(f"tracker fps    : {recorder.frames_recorded / elapsed:.2f}")
+    print(f"track cache    : {out}")
     return 0
 
 
@@ -1014,6 +1085,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run_measure(args)
         if args.command == "control":
             return _run_control(args)
+        if args.command == "cache-tracks":
+            return _run_cache_tracks(args)
         if args.command == "calibrate-axes":
             return _run_calibrate_axes(args)
         if args.command == "evaluate":

@@ -502,3 +502,22 @@ def test_main_measure_exits_non_zero_naming_a_missing_video(
 
     assert status == 1
     assert str(missing) in capsys.readouterr().err
+
+
+def test_demo_overlay_draws_without_changing_the_input() -> None:
+    """The research dashboard renders on a real-sized frame and leaves its input intact."""
+    from src.config import load_config as _load
+    from src.overlay import SignalOverlay, demo_panel_rows
+    from src.signal_controller import PhaseInfo, SignalState
+
+    cfg = _load("config/bellevue_116th_v2.json")
+    frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+    metrics = {n: _metrics(n, 3, 1, 0.3, 0.25) for n in ("North", "East", "South", "West")}
+    scores = {"North": 0.2, "East": 0.1, "South": 0.6, "West": 0.5}
+    states = {n: SignalState.GREEN if n == "North" else SignalState.RED for n in scores}
+    info = PhaseInfo(10, "North", SignalState.GREEN, 0, 0, 30.0, 30.0, 12.0, 0.2, False, False, False)
+    out = SignalOverlay(cfg, "demo").draw(frame, [], [], metrics, scores, states, info, "adaptive", 1.0)
+    assert out.shape == frame.shape and out.any() and not frame.any()
+    rows = demo_panel_rows(metrics, scores, states)
+    assert [r[0] for r in rows] == ["North", "East", "South", "West"]
+    assert rows[0][1] == "G" and rows[1][1] == "R"

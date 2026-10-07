@@ -63,6 +63,62 @@ RED = "RED"
 SIGNAL_STATES = (GREEN, YELLOW, RED)
 
 
+def queue_tail_reach(positions: Iterable[float], max_gap: float) -> float:
+    """Return the tail of the contiguous queue that starts at the stop line.
+
+    ``positions`` are the upstream axis fractions (0 = stop line, 1 = far edge of the
+    visible approach) of the vehicles judged stopped on one Approach. A queue is a
+    chain of stopped vehicles beginning at the stop line, so walking upstream from 0
+    the chain continues while consecutive stopped vehicles are at most ``max_gap``
+    apart, and the reach is the position of its last member. A stopped vehicle beyond
+    a larger gap is not part of the queue (a parked car, a detection far upstream,
+    a slow vehicle misjudged as stopped) and cannot set the reach.
+
+    With ``max_gap <= 0`` the legacy definition is returned: the furthest stopped
+    vehicle, contiguous or not. Shared by the vision Metrics_Engine and the closed-loop
+    simulation sensor so both measure reach with one definition.
+    """
+    ordered = sorted(float(p) for p in positions)
+    if not ordered:
+        return 0.0
+    if max_gap <= 0.0:
+        return clamp(ordered[-1])
+    tail = 0.0
+    previous = 0.0
+    for position in ordered:
+        if position - previous > max_gap:
+            break
+        tail = previous = position
+    return clamp(tail)
+
+
+def queue_tail_reach_scaled(stopped: Iterable[tuple[float, float, bool]]) -> float:
+    """Contiguous queue tail with a per-vehicle gap allowance (perspective-scaled).
+
+    ``stopped`` holds ``(position, allowance, anchored)`` per stopped vehicle: its axis
+    fraction, the largest gap (in axis fraction) that may separate it from the vehicle
+    in front of it while still being one queue — derived from its own box size, so a
+    large near vehicle and a small far one are judged on the same physical scale — and
+    whether it is inside the Queue_Region. Walking upstream, the chain starts at the
+    first vehicle that is anchored in the Queue_Region or within its allowance of the
+    stop line, and continues while each next vehicle is within its allowance of the
+    previous one. Returns the position of the last member, or 0 when there is no chain.
+    """
+    tail = 0.0
+    previous = 0.0
+    started = False
+    for position, allowance, anchored in sorted(stopped):
+        if not started:
+            if anchored or position <= allowance:
+                started = True
+                tail = previous = position
+            continue
+        if position - previous > allowance:
+            break
+        tail = previous = position
+    return clamp(tail)
+
+
 def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     """Return ``value`` confined to ``[low, high]``.
 
@@ -252,6 +308,14 @@ class MetricsEngine:
         # current frame's tracks on every update, so it stays bounded by the live
         # track set rather than growing over the run.
         self._previous_points: dict[int, tuple[float, float]] = {}
+        # Windowed stopped test (audit fix W5): recent reference points per Track_ID,
+        # oldest first, bounded by the window. Rebuilt from the live track set each
+        # frame like ``_previous_points``. Empty and unused in legacy mode.
+        self._window_seconds = float(getattr(config, "stopped_window_seconds", 0.0))
+        self._speed_ratio = float(getattr(config, "stopped_speed_ratio", 0.2))
+        self._tail_gap = float(getattr(config, "queue_tail_gap", 0.0))
+        self._tail_gap_boxes = float(getattr(config, "queue_tail_gap_boxes", 0.0))
+        self._history: dict[int, deque[tuple[float, float]]] = {}
         # Stop counting (E7). Average stops is the headline measure of effectiveness
         # in Li et al. (2025) and the one their model improves most consistently, and
         # this project could not report it at all. A stop is a moving-to-stopped
@@ -351,7 +415,16 @@ class MetricsEngine:
         # Approach. Taken over *stopped* vehicles rather than queueing ones, so a
         # queue that has backed up beyond the Queue_Region still extends the reach —
         # which is precisely the case a count inside that region cannot see.
-        reach: dict[str, float] = {name: 0.0 for name in self.approach_names}
+        stopped_positions: dict[str, list[float]] = {
+            name: [] for name in self.approach_names
+        }
+        # Perspective-scaled queue tail (queue_tail_gap_boxes > 0): per stopped vehicle,
+        # (axis fraction, gap allowance in axis fraction, inside the Queue_Region).
+        stopped_items: dict[str, list[tuple[float, float, bool]]] = {
+            name: [] for name in self.approach_names
+        }
+        window_frames = self._window_frames(dt)
+        current_history: dict[int, deque[tuple[float, float]]] = {}
 
         # Every track that is stopped on this frame, assigned or not. Kept whole so
         # the moving-to-stopped test on the next frame is not confused by a track
@@ -362,7 +435,13 @@ class MetricsEngine:
             # Recorded before the assignment check so a track that crosses into an
             # ROI still has a usable previous position on the frame it arrives.
             point = (float(track.ref_point[0]), float(track.ref_point[1]))
-            was_stopped = self._is_stopped(track.track_id, point)
+            if window_frames:
+                was_stopped = self._is_stopped_windowed(
+                    track.track_id, point, float(getattr(track, "box_height", 0.0)),
+                    dt, window_frames, current_history,
+                )
+            else:
+                was_stopped = self._is_stopped(track.track_id, point)
             current_points[track.track_id] = point
             if was_stopped:
                 stopped_now.add(track.track_id)
@@ -381,13 +460,21 @@ class MetricsEngine:
                 queueing[approach].add(track.track_id)
             if was_stopped:
                 stopped[approach].add(track.track_id)
-                # E9: extend this Approach's reach if this stopped vehicle sits
-                # further upstream than any seen so far on this frame.
+                # E9: record where this stopped vehicle sits along the upstream
+                # axis; the reach is derived from all of them after the loop.
                 axis = self._axes.get(approach)
                 if axis is not None:
                     position = axis.fraction(point)
-                    if position > reach[approach]:
-                        reach[approach] = position
+                    stopped_positions[approach].append(position)
+                    if self._tail_gap_boxes > 0.0 and axis.length > 0.0:
+                        allowance = (
+                            self._tail_gap_boxes
+                            * self._extent_along(axis, track, point)
+                            / axis.length
+                        )
+                        stopped_items[approach].append(
+                            (position, allowance, bool(track.is_queueing))
+                        )
 
             # E7: one stop per moving-to-stopped transition. A track already stopped
             # on the previous frame is not counted again, so a vehicle standing for
@@ -399,6 +486,17 @@ class MetricsEngine:
         self._accumulate(queueing, states, dt)
         self._previous_points = current_points
         self._stopped_previous = stopped_now
+        self._history = current_history
+        if self._tail_gap_boxes > 0.0:
+            reach = {
+                name: queue_tail_reach_scaled(stopped_items[name])
+                for name in self.approach_names
+            }
+        else:
+            reach = {
+                name: queue_tail_reach(stopped_positions[name], self._tail_gap)
+                for name in self.approach_names
+            }
 
         return {
             approach.name: self._measure(
@@ -516,6 +614,67 @@ class MetricsEngine:
         dx = point[0] - previous[0]
         dy = point[1] - previous[1]
         return math.hypot(dx, dy) < threshold
+
+    @staticmethod
+    def _extent_along(axis, track, point: tuple[float, float]) -> float:
+        """The vehicle's length along the road, in pixels, from its box.
+
+        The extent of an axis-aligned box of width ``w`` and height ``h`` along the unit
+        direction ``(ux, uy)`` is ``|w·ux| + |h·uy|``. Using the local road direction
+        rather than the box height alone matters on this camera: a car seen side-on (the
+        West leg) is about twice as wide as it is tall, so "two box heights" was shorter
+        than one car plus its gap and broke real queues apart. Falls back to the box
+        height when no width is known (hand-built tracks).
+        """
+        height = float(getattr(track, "box_height", 0.0))
+        width = float(getattr(track, "box_width", 0.0))
+        if width <= 0.0:
+            return height
+        ux, uy = axis.direction_at(point)
+        return abs(width * ux) + abs(height * uy)
+
+    def _window_frames(self, dt: float) -> int:
+        """Frames in the stopped-test window, or 0 in legacy per-frame mode."""
+        if self._window_seconds <= 0.0 or dt <= 0.0:
+            return 0
+        return max(2, int(round(self._window_seconds / dt)))
+
+    def _is_stopped_windowed(
+        self,
+        track_id: int,
+        point: tuple[float, float],
+        box_height: float,
+        dt: float,
+        window_frames: int,
+        current_history: dict[int, deque[tuple[float, float]]],
+    ) -> bool:
+        """Whether ``track_id`` moved slower than the threshold over the window.
+
+        Speed is net displacement across the window divided by the elapsed time, in
+        box heights per second. Net displacement over ~1 s averages out the
+        frame-to-frame box jitter that made the per-frame test flip, and dividing by
+        the box height puts a distant (small) vehicle and a near (large) one on the
+        same physical scale, so a far vehicle moving at speed is no longer read as
+        stopped merely because it covers few pixels per frame.
+
+        A track needs at least half a window of history before it can be judged
+        stopped; until then it is reported as moving, the same conservative
+        direction the legacy test takes for a track's first frame.
+        """
+        previous = self._history.get(track_id)
+        history: deque[tuple[float, float]] = deque(
+            previous if previous is not None else (), maxlen=window_frames
+        )
+        stopped = False
+        if len(history) >= max(1, window_frames // 2) and box_height > 0.0:
+            oldest = history[0]
+            elapsed = len(history) * dt
+            displacement = math.hypot(point[0] - oldest[0], point[1] - oldest[1])
+            speed = displacement / elapsed / box_height
+            stopped = speed < self._speed_ratio
+        history.append(point)
+        current_history[track_id] = history
+        return stopped
 
     def _pce_numerator(self, classes: Mapping[int, str]) -> float:
         """Sum the configured PCE weight of each distinct track (Req 5.9)."""
@@ -1006,6 +1165,8 @@ __all__ = [
     "MetricsEngine",
     "QueuePredictor",
     "clamp",
+    "queue_tail_reach",
+    "queue_tail_reach_scaled",
     "compute_config_demands",
     "compute_config_scores",
     "compute_score",
