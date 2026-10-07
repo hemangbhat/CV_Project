@@ -53,9 +53,19 @@ scenarios, 20 paired seeds, a null control, and a pre-registered protocol. My S1
 rule (denial counter, density argmax, three bands) but not their lane-priority weights or
 their 40/60/120 s bands.
 
-**6. Why did you study T-ITS?**
-My professor asked for newer, higher-tier work on the limitation. Both assigned 2025
-T-ITS papers address queues and prediction, which is exactly where Raza stops.
+**6. Why did you study T-ITS, and why did you choose these two papers?**
+The course method asks for newer research on the base paper's limitation, preferably IEEE
+T-ITS, which is the leading journal for traffic-control research. I chose the two papers
+myself, because each attacks one half of the limitation I found in Raza:
+* Li et al. (2025) treat the queue as a *profile* and measure *over-saturation*. That
+  addresses "density does not describe the queue".
+* Wei et al. (2025) *predict* queue dynamics to prevent spillback. That addresses "reacting
+  only to the present is not enough".
+
+Both are 2025, both are in T-ITS, and both state limitations that a camera can address
+(Wei assumes the queue state is measured; Li needs connected-vehicle trajectories, which a
+tracker can provide). I also checked newer and nearby work (Mohajerpoor et al. 2023, Zhu et
+al. 2024/25) and kept them as supporting references.
 
 **7. What did Li contribute?**
 A queue *profile* estimated from connected-vehicle trajectories, a test for

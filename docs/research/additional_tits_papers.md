@@ -2,7 +2,7 @@
 
 Searched October 2026. Each entry was confirmed by title and venue in search results
 (full text was not accessible from the work environment, so read the paper itself before
-quoting details beyond what is stated here). Neither replaces the two assigned papers: Li
+quoting details beyond what is stated here). Neither replaces the two papers this project selected: Li
 (queue profile) and Wei (predictive queue dynamics) remain the right pair for the research
 chain. These two strengthen specific points.
 
@@ -56,7 +56,7 @@ doi:10.1109/TITS.2024.3498012 (vol. 26, no. 2, Feb. 2025).
 
 ## Should the project be re-based on one of these?
 
-No. The assigned pair already gives the professor's chain
+No. The selected pair already gives the professor's chain
 (Raza → limitation → Li & Wei → enhancement), and the project is complete on it. Adding
 Mohajerpoor et al. (2023) as a *third* T-ITS reference strengthens the discussion of the
 main finding, and Zhu et al. strengthens future work. Neither requires new experiments.

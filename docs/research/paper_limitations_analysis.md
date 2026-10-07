@@ -1,6 +1,6 @@
 > **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
 
-# Limitation Analysis of the Two Assigned IEEE TITS Papers, and What This Project Takes From Them
+# Limitation Analysis of the Two Selected IEEE TITS Papers, and What This Project Takes From Them
 
 This document does three things:
 
@@ -25,13 +25,13 @@ Both are IEEE Transactions on Intelligent Transportation Systems, 2025.
 | **A** | Li, Lu, Wang — *A Multi-Objective Model for Traffic Signal Coordination Control With Queue Profile Estimation* | IEEE **TITS**, vol. 26, no. 12, pp. 23389–23406, Dec. 2025 | DOI 10.1109/TITS.2025.3616119 |
 | **B** | Wei, Ampountolas, Hirrle, Wang — *Hierarchical Predictive Control of Network Traffic Signals Using Link Transmission Model With Queue Dynamics* | IEEE **TITS**, vol. 26, no. 10, pp. 16391–16404, Oct. 2025 | DOI 10.1109/TITS.2025.3568869 |
 
-A third paper is referenced throughout but is *not* one of the two assigned:
+A third paper is referenced throughout but is *not* one of the two selected:
 **Raza et al., IEEE Access vol. 13, 2025, DOI 10.1109/ACCESS.2025.3602844** — the
 edge-deployed YOLO + PCE density paper. That is this project's existing *base*
 paper, already positioned in `report/literature_review.md` §2.1. It is kept here
 only where it supplies something one of the TITS papers is missing.
 
-**What unites the two assigned papers.** Both are model-based, optimisation-driven
+**What unites the two selected papers.** Both are model-based, optimisation-driven
 *network* controllers, and both make the same central argument: **queue length must
 be treated as a variable to be estimated, not as a fixed input or an afterthought.**
 Wei et al. make it a state in a predictive model; Li et al. make it a decision

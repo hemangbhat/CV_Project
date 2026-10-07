@@ -3,8 +3,8 @@
 | File | Paper | Role |
 |---|---|---|
 | `Raza2025_IEEEAccess_edge_ATLC_YOLO_PCE.pdf` | M. Raza et al., "An Edge-Deployed Real-Time Adaptive Traffic Light Control System Using YOLO-Based Vehicle Detection and PCE-Aware Density Estimation", *IEEE Access* 13, 2025, doi:10.1109/ACCESS.2025.3602844 | base paper |
-| `Li2025_TITS_multiobjective_queue_profile.pdf` | C. Li, Y. Lu, H. Wang, "A Multi-Objective Model for Traffic Signal Coordination Control With Queue Profile Estimation", *IEEE T-ITS* 26(12), 2025, doi:10.1109/TITS.2025.3616119 | T-ITS paper 1 (assigned) |
-| `Wei2025_TITS_hierarchical_predictive_control.pdf` | Wei, Ampountolas, Hirrle, Wang, "Hierarchical Predictive Control of Network Traffic Signals Using Link Transmission Model With Queue Dynamics", *IEEE T-ITS* 26(10), 2025, doi:10.1109/TITS.2025.3568869 | T-ITS paper 2 (assigned) |
+| `Li2025_TITS_multiobjective_queue_profile.pdf` | C. Li, Y. Lu, H. Wang, "A Multi-Objective Model for Traffic Signal Coordination Control With Queue Profile Estimation", *IEEE T-ITS* 26(12), 2025, doi:10.1109/TITS.2025.3616119 | T-ITS paper 1 (selected for this project: queue profile, over-saturation) |
+| `Wei2025_TITS_hierarchical_predictive_control.pdf` | Wei, Ampountolas, Hirrle, Wang, "Hierarchical Predictive Control of Network Traffic Signals Using Link Transmission Model With Queue Dynamics", *IEEE T-ITS* 26(10), 2025, doi:10.1109/TITS.2025.3568869 | T-ITS paper 2 (selected for this project: predictive queue dynamics, spillback) |
 
 Facts about Raza used in the report, checked against the PDF (§III, Algorithm 1, §IV, §VI):
 
