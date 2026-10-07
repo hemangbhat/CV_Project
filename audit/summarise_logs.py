@@ -1,4 +1,4 @@
-"""Audit tool: one line per run log (stage, metrics, green sequence). Usage: python audit/summarise_logs.py "results/run_logs/bellevue_116th_busy*"."""
+"""Audit tool: one line per run log (stage, metrics, green sequence). Usage: python audit/summarise_logs.py "results/run_logs_legacy/bellevue_116th_busy*"."""
 import json,glob,sys,os
 def stage(d):
     c=d['config']

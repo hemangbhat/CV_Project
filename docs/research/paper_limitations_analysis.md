@@ -1,3 +1,5 @@
+> **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
+
 # Limitation Analysis of the Two Assigned IEEE TITS Papers, and What This Project Takes From Them
 
 This document does three things:

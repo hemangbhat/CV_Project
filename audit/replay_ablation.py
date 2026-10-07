@@ -38,7 +38,7 @@ variants={
  'S1 a=1':V(alpha=1.0,use_forecast=False,forecast_weight=0,use_spillback_risk=False,spillback_risk_weight=0,use_queue_reach=False),
 }
 for clip,run in [('busy','bellevue_116th_busy__adaptive__alpha0p50__20260913-232912'),('dev','bellevue_116th_dev__adaptive__alpha0p50__20260914-090322'),('final','bellevue_116th_final__adaptive__alpha0p50__20260914-095045')]:
-    log=json.load(open(f'results/run_logs/{run}.json'))
+    log=json.load(open(f'results/run_logs_legacy/{run}.json'))
     print('==',clip)
     for name,cfg in variants.items():
         if cfg=='null':

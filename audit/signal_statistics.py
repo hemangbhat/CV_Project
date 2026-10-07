@@ -13,7 +13,7 @@ RUNS = [
     ("final", "bellevue_116th_final__adaptive__alpha0p50__20260914-095045"),
 ]
 for clip, run in RUNS:
-    d = json.load(open(f"results/run_logs/{run}.json"))
+    d = json.load(open(f"results/run_logs_legacy/{run}.json"))
     caps = {a["name"]: a["queue_capacity"] for a in d["config"]["approaches"]}
     fr = d["frames"]
     print(f"== {clip} ({len(fr)} frames)")

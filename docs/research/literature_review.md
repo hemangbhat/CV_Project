@@ -1,3 +1,5 @@
+> **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
+
 # Literature Review and Positioning
 
 > For the project report. **All result figures below are measured and final** — every
