@@ -29,6 +29,17 @@ saturates → forecast is blind) **almost never occurs on the real footage** (Q 
 frames). A strict professor who asks the right two questions will find this. It is fixable in the
 remaining time, and §8 is the plan.
 
+### Final outcome (after the fixes, October 2026)
+
+* **Measurement:** fixed (W5, W7). Stops per vehicle 4.28 → 0.76; frames with X jumps > 0.3
+  fell from 7.3% to ≤ 1.1%; the measured queue tail matches the visible queue where vehicles
+  are detected. Remaining limit: detection recall on distant cars (YOLOv8m used in final runs).
+* **Control claim:** tested properly (W1–W4) in a pre-registered closed-loop SUMO experiment.
+  **Adding X or S does not measurably improve delay, spillback or throughput** in any of 9
+  scenarios. Adding S changed the green choice in 1 of 40 inspected runs. The actuated
+  green-time rule is the largest effect in the study.
+* Full write-up: `report/FINAL_REPORT.md`. Viva answers: `docs/VIVA_QA.md`.
+
 ---
 
 ## 1. What is correct
@@ -209,6 +220,11 @@ contiguous queue tail; validated visually in `report/queue_tail_validation.png`.
 
 ## 6. Is the enhancement genuinely demonstrated?
 
+*Final answer after the closed-loop experiment:* the **measurement** is demonstrated; a
+**control benefit is tested and not found**, with the mechanism explained
+(`report/FINAL_REPORT.md` §6.3). The original pre-fix assessment follows.
+
+
 **No — not yet.** The *measurement* idea (spatial queue reach + forward-projected storage risk) is
 sound, original in its construction, well tested in synthetic unit tests, and correctly motivated by
 Li & Wei. But on the current evidence: the reported gain is reproduced without the risk signal (W2),
@@ -228,7 +244,7 @@ but it must be reported as such.
 
 ---
 
-## 8. Exact final build plan (≈ 5 weeks of student time, ≈ 6 phases)
+## 8. Build plan (executed — see the status table above for where each item landed) (≈ 5 weeks of student time, ≈ 6 phases)
 
 **Phase A — Measurement fix (CV core, week 1).**
 A1 stopped test over a 1 s window, normalised by bounding-box height (perspective-invariant), with
