@@ -70,6 +70,7 @@ from src.signal_controller import (
     FixedTimeController,
     PhaseSequencer,
 )
+from src.track_cache import CachedTracker, RecordingTracker, default_cache_path
 from src.tracking import ByteTrackTracker, Tracker
 from src.traffic_metrics import (
     ApproachMetrics,
@@ -484,8 +485,31 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="do not write an annotated video, only the run log",
     )
+    control_parser.add_argument(
+        "--track-cache",
+        default=None,
+        metavar="PATH",
+        help=(
+            "replay recorded YOLO+ByteTrack output from this cache instead of running "
+            "the detector (see the cache-tracks command); guarantees identical vision "
+            "input across ablation stages"
+        ),
+    )
     control_parser.set_defaults(write_video=True)
     _add_common_arguments(control_parser)
+
+    cache_parser = subparsers.add_parser(
+        "cache-tracks",
+        help="run YOLO+ByteTrack once over a video and record its tracks for replay",
+    )
+    cache_parser.add_argument("--video", required=True, metavar="PATH", help="input video file")
+    cache_parser.add_argument(
+        "--out",
+        default=None,
+        metavar="PATH",
+        help="cache file (default: results/track_cache/<video>__<model>__c<conf>.json.gz)",
+    )
+    _add_common_arguments(cache_parser)
 
     calibrate_parser = subparsers.add_parser(
         "calibrate-axes",
@@ -701,7 +725,11 @@ def _run_control(args: argparse.Namespace) -> int:
     patching ``ByteTrackTracker`` in this module.
     """
     config = load_config(args.config)
-    tracker = ByteTrackTracker(config)
+    tracker: Tracker = (
+        CachedTracker(args.track_cache, config)
+        if args.track_cache
+        else ByteTrackTracker(config)
+    )
     pipeline = Pipeline(
         args.video,
         config,
@@ -758,6 +786,28 @@ def _run_control(args: argparse.Namespace) -> int:
         )
     if result.quit_early:
         print(f"note           : stopped early on the quit key {config.quit_key!r}")
+    return 0
+
+
+def _run_cache_tracks(args: argparse.Namespace) -> int:
+    """Run the real tracker once over a video and save its per-frame output."""
+    config = load_config(args.config)
+    recorder = RecordingTracker(ByteTrackTracker(config), config, args.video)
+    ingestor = VideoIngestor(args.video, config)
+    started = time.perf_counter()
+    try:
+        for _index, frame in ingestor.frames():
+            recorder.update(frame, [])
+    finally:
+        ingestor.close()
+        recorder.close()
+    out = args.out or default_cache_path(args.video, config)
+    recorder.save(out)
+    elapsed = time.perf_counter() - started
+    print(f"video          : {args.video}")
+    print(f"frames cached  : {recorder.frames_recorded}")
+    print(f"tracker fps    : {recorder.frames_recorded / elapsed:.2f}")
+    print(f"track cache    : {out}")
     return 0
 
 
@@ -1014,6 +1064,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run_measure(args)
         if args.command == "control":
             return _run_control(args)
+        if args.command == "cache-tracks":
+            return _run_cache_tracks(args)
         if args.command == "calibrate-axes":
             return _run_calibrate_axes(args)
         if args.command == "evaluate":

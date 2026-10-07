@@ -8,3 +8,6 @@ opencv-python==4.13.0.92
 ultralytics==8.3.253
 numpy==2.2.6
 matplotlib==3.10.8
+# ByteTrack association solver. Ultralytics imports it at tracking time and
+# otherwise tries to auto-install it mid-run, which is not reproducible.
+lap==0.5.13

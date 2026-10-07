@@ -1,0 +1,173 @@
+"""Tests for the robust queue measurement (audit fix W5).
+
+Two changes, both opt-in through the configuration so every legacy run log keeps its
+meaning:
+
+* a windowed, perspective-normalised stopped test (``stopped_window_seconds``,
+  ``stopped_speed_ratio``) in place of the per-frame 2-pixel test, and
+* a contiguous queue tail (``queue_tail_gap``) in place of "furthest stopped vehicle".
+"""
+
+from __future__ import annotations
+
+import dataclasses
+import json
+from pathlib import Path
+
+import pytest
+
+from src.config import APPROACH_NAMES, Config, load_config, to_json_obj
+from src.errors import ConfigError
+from src.lane_analysis import AssignedTrack, build_approach_axes
+from src.traffic_metrics import MetricsEngine, queue_tail_reach
+
+CALIBRATED = Path(__file__).resolve().parents[1] / "config" / "bellevue_116th_calibrated.json"
+ALL_RED = {name: "RED" for name in APPROACH_NAMES}
+DT = 1.0 / 30.0
+
+
+@pytest.fixture
+def base() -> Config:
+    return load_config(str(CALIBRATED))
+
+
+def robust(config: Config, **over) -> Config:
+    values = dict(stopped_window_seconds=1.0, stopped_speed_ratio=0.2, queue_tail_gap=0.25)
+    values.update(over)
+    return dataclasses.replace(config, **values)
+
+
+def north_point(config: Config, fraction: float) -> tuple[float, float]:
+    """The image point lying ``fraction`` of the way up North's approach axis."""
+    axis = build_approach_axes(config)["North"]
+    ux, uy = axis.upstream
+    return (axis.origin[0] + ux * axis.length * fraction, axis.origin[1] + uy * axis.length * fraction)
+
+
+def track(track_id, point, height=40.0, queueing=False):
+    return AssignedTrack(
+        track_id=track_id, vehicle_class="car", ref_point=point,
+        approach="North", is_queueing=queueing, box_height=height,
+    )
+
+
+# -- queue_tail_reach --------------------------------------------------------
+
+
+def test_tail_is_zero_without_stopped_vehicles() -> None:
+    assert queue_tail_reach([], 0.25) == 0.0
+
+
+def test_tail_follows_a_contiguous_chain_from_the_stop_line() -> None:
+    assert queue_tail_reach([0.05, 0.2, 0.4, 0.6], 0.25) == pytest.approx(0.6)
+
+
+def test_isolated_far_vehicle_does_not_set_the_tail() -> None:
+    # Chain 0.05 -> 0.2, then a gap of 0.7 to a lone stopped box.
+    assert queue_tail_reach([0.05, 0.2, 0.9], 0.25) == pytest.approx(0.2)
+
+
+def test_queue_not_starting_at_the_stop_line_has_no_tail() -> None:
+    assert queue_tail_reach([0.5, 0.6], 0.25) == 0.0
+
+
+def test_order_of_positions_does_not_matter() -> None:
+    assert queue_tail_reach([0.4, 0.05, 0.2], 0.25) == queue_tail_reach([0.05, 0.2, 0.4], 0.25)
+
+
+def test_zero_gap_is_the_legacy_furthest_vehicle() -> None:
+    assert queue_tail_reach([0.05, 0.2, 0.9], 0.0) == pytest.approx(0.9)
+
+
+# -- windowed stopped test ---------------------------------------------------
+
+
+def _run(engine, frames):
+    out = None
+    for tracks in frames:
+        out = engine.update(tracks, ALL_RED, DT)
+    return out["North"]
+
+
+def test_jittering_stationary_vehicle_is_stopped(base: Config) -> None:
+    """+-3 px box jitter every frame: the legacy 2 px test flips, the window does not."""
+    cfg = robust(base)
+    p = north_point(cfg, 0.1)
+    frames = [[track(1, (p[0] + (3 if i % 2 else -3), p[1]))] for i in range(45)]
+    metrics = _run(MetricsEngine(cfg), frames)
+    assert metrics.queue_reach == pytest.approx(0.1, abs=0.03)
+
+    legacy = _run(MetricsEngine(base), frames)
+    assert legacy.queue_reach == 0.0  # 6 px per frame reads as moving every frame
+
+
+def test_distant_slow_mover_is_not_stopped(base: Config) -> None:
+    """A small (distant) box moving 1.5 px/frame is 2.25 box-heights/s: moving.
+
+    The legacy test (< 2 px between frames) calls it stopped, which is the
+    perspective bias that inflated queue reach far upstream.
+    """
+    cfg = robust(base)
+    start = north_point(cfg, 0.1)
+    frames = [[track(1, (start[0] - 1.5 * i, start[1]), height=20.0)] for i in range(45)]
+    assert _run(MetricsEngine(cfg), frames).queue_reach == 0.0
+    assert _run(MetricsEngine(base), frames).queue_reach > 0.0
+
+
+def test_new_track_needs_half_a_window_before_it_can_be_stopped(base: Config) -> None:
+    cfg = robust(base)
+    p = north_point(cfg, 0.1)
+    engine = MetricsEngine(cfg)
+    early = None
+    for _ in range(10):  # 10 frames < 15 = half of the 30-frame window
+        early = engine.update([track(1, p)], ALL_RED, DT)["North"]
+    assert early.queue_reach == 0.0
+    later = None
+    for _ in range(10):
+        later = engine.update([track(1, p)], ALL_RED, DT)["North"]
+    assert later.queue_reach > 0.0
+
+
+def test_reach_grows_with_a_physically_extending_queue(base: Config) -> None:
+    """Vehicles join the back of a stationary queue: the tail moves upstream."""
+    cfg = robust(base)
+    engine = MetricsEngine(cfg)
+    reaches = []
+    queue = []
+    for k, fraction in enumerate([0.05, 0.2, 0.35, 0.5]):
+        queue.append(track(k + 1, north_point(cfg, fraction)))
+        for _ in range(30):
+            reaches.append(engine.update(list(queue), ALL_RED, DT)["North"].queue_reach)
+    assert reaches[-1] == pytest.approx(0.5, abs=0.02)
+    assert reaches[-1] > reaches[60] > reaches[29]
+
+
+def test_robust_mode_is_off_by_default(base: Config) -> None:
+    assert base.stopped_window_seconds == 0.0
+    assert base.queue_tail_gap == 0.0
+
+
+# -- configuration ------------------------------------------------------------
+
+
+def test_new_fields_round_trip(base: Config, tmp_path: Path) -> None:
+    cfg = robust(base, stopped_speed_ratio=0.3)
+    path = tmp_path / "c.json"
+    path.write_text(json.dumps(to_json_obj(cfg)))
+    loaded = load_config(str(path))
+    assert loaded.stopped_window_seconds == 1.0
+    assert loaded.stopped_speed_ratio == 0.3
+    assert loaded.queue_tail_gap == 0.25
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [("stopped_window_seconds", -1.0), ("stopped_speed_ratio", 0.0), ("queue_tail_gap", 1.5)],
+)
+def test_invalid_values_are_rejected(base: Config, tmp_path: Path, field, value) -> None:
+    obj = to_json_obj(base)
+    obj[field] = value
+    path = tmp_path / "c.json"
+    path.write_text(json.dumps(obj))
+    with pytest.raises(ConfigError, match=field):
+        load_config(str(path))

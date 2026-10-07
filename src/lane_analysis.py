@@ -643,6 +643,10 @@ class AssignedTrack:
     ref_point: Point
     approach: str | None
     is_queueing: bool
+    # Box height in pixels, the per-vehicle scale the windowed stopped test divides
+    # displacement by (a distant vehicle has a small box and moves few pixels).
+    # 0.0 on hand-built values that never came from a Track.
+    box_height: float = 0.0
 
     def __post_init__(self) -> None:
         if self.approach is None and self.is_queueing:
@@ -781,6 +785,7 @@ class ApproachAssigner:
                         ref_point=ref,
                         approach=None,
                         is_queueing=False,
+                        box_height=float(track.height),
                     )
                 )
                 continue
@@ -807,6 +812,7 @@ class ApproachAssigner:
                     # Requirement 4.6: queueing iff inside the assigned Approach's
                     # own queue region — never a neighbour's.
                     is_queueing=point_in_polygon(chosen.queue_region, ref),
+                    box_height=float(track.height),
                 )
             )
 

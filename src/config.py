@@ -166,6 +166,19 @@ class Config:
     use_spillback_risk: bool = False
     spillback_risk_weight: float = 0.0      # rho in 0..1
     risk_horizon_seconds: float = 5.0       # > 0
+    # --- Robust queue measurement (audit fix, see AUDIT_REPORT.md W5) ------------
+    # ``stopped_window_seconds`` > 0 replaces the per-frame "moved < stopped_displacement
+    # px since the previous frame" test with a speed test over a time window, measured
+    # in bounding-box heights per second so a distant (small) vehicle and a near
+    # (large) one are judged on the same physical scale. 0 keeps the legacy test.
+    # ``stopped_speed_ratio`` is that threshold: below it a vehicle counts as stopped.
+    # ``queue_tail_gap`` > 0 makes queue reach the tail of the CONTIGUOUS chain of
+    # stopped vehicles that starts at the stop line (consecutive stopped vehicles no
+    # more than this axis fraction apart), so an isolated stopped box far upstream
+    # cannot set the reach. 0 keeps the legacy "furthest stopped vehicle" reach.
+    stopped_window_seconds: float = 0.0     # >= 0, 0 = legacy per-frame test
+    stopped_speed_ratio: float = 0.2        # > 0, box heights per second
+    queue_tail_gap: float = 0.0             # 0..1, 0 = legacy max reach
 
     def approach(self, name: str) -> ApproachConfig:
         """Return the Approach configuration named ``name``."""
@@ -428,6 +441,9 @@ def from_json_obj(obj: Mapping[str, Any]) -> Config:
         use_spillback_risk=_optional_bool(obj, "use_spillback_risk", False),
         spillback_risk_weight=_optional_float(obj, "spillback_risk_weight", 0.0),
         risk_horizon_seconds=_optional_float(obj, "risk_horizon_seconds", 5.0),
+        stopped_window_seconds=_optional_float(obj, "stopped_window_seconds", 0.0),
+        stopped_speed_ratio=_optional_float(obj, "stopped_speed_ratio", 0.2),
+        queue_tail_gap=_optional_float(obj, "queue_tail_gap", 0.0),
     )
 
 
@@ -473,6 +489,9 @@ def to_json_obj(config: Config) -> dict[str, Any]:
         "use_spillback_risk": config.use_spillback_risk,
         "spillback_risk_weight": config.spillback_risk_weight,
         "risk_horizon_seconds": config.risk_horizon_seconds,
+        "stopped_window_seconds": config.stopped_window_seconds,
+        "stopped_speed_ratio": config.stopped_speed_ratio,
+        "queue_tail_gap": config.queue_tail_gap,
     }
 
 
@@ -705,6 +724,18 @@ def _validate(config: Config) -> None:
     _check_int_at_least(config.forecast_window_frames, "forecast_window_frames", 2)
 
     _check_positive(config.stopped_displacement, "stopped_displacement")
+    _check_positive(config.stopped_speed_ratio, "stopped_speed_ratio")
+    _check_in_unit_range(config.queue_tail_gap, "queue_tail_gap")
+    if (
+        isinstance(config.stopped_window_seconds, bool)
+        or not isinstance(config.stopped_window_seconds, (int, float))
+        or not math.isfinite(config.stopped_window_seconds)
+        or config.stopped_window_seconds < 0.0
+    ):
+        raise ConfigError(
+            f"configuration field 'stopped_window_seconds' must be a finite number >= 0 "
+            f"(0 meaning the legacy per-frame test), got {config.stopped_window_seconds!r}"
+        )
     _check_positive(config.saturation_flow_rate, "saturation_flow_rate")
     # 0.0 means unbounded, so this is a floor of 0 rather than a positivity check.
     if (
