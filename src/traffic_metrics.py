@@ -92,6 +92,33 @@ def queue_tail_reach(positions: Iterable[float], max_gap: float) -> float:
     return clamp(tail)
 
 
+def queue_tail_reach_scaled(stopped: Iterable[tuple[float, float, bool]]) -> float:
+    """Contiguous queue tail with a per-vehicle gap allowance (perspective-scaled).
+
+    ``stopped`` holds ``(position, allowance, anchored)`` per stopped vehicle: its axis
+    fraction, the largest gap (in axis fraction) that may separate it from the vehicle
+    in front of it while still being one queue — derived from its own box size, so a
+    large near vehicle and a small far one are judged on the same physical scale — and
+    whether it is inside the Queue_Region. Walking upstream, the chain starts at the
+    first vehicle that is anchored in the Queue_Region or within its allowance of the
+    stop line, and continues while each next vehicle is within its allowance of the
+    previous one. Returns the position of the last member, or 0 when there is no chain.
+    """
+    tail = 0.0
+    previous = 0.0
+    started = False
+    for position, allowance, anchored in sorted(stopped):
+        if not started:
+            if anchored or position <= allowance:
+                started = True
+                tail = previous = position
+            continue
+        if position - previous > allowance:
+            break
+        tail = previous = position
+    return clamp(tail)
+
+
 def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     """Return ``value`` confined to ``[low, high]``.
 
@@ -287,6 +314,7 @@ class MetricsEngine:
         self._window_seconds = float(getattr(config, "stopped_window_seconds", 0.0))
         self._speed_ratio = float(getattr(config, "stopped_speed_ratio", 0.2))
         self._tail_gap = float(getattr(config, "queue_tail_gap", 0.0))
+        self._tail_gap_boxes = float(getattr(config, "queue_tail_gap_boxes", 0.0))
         self._history: dict[int, deque[tuple[float, float]]] = {}
         # Stop counting (E7). Average stops is the headline measure of effectiveness
         # in Li et al. (2025) and the one their model improves most consistently, and
@@ -390,6 +418,11 @@ class MetricsEngine:
         stopped_positions: dict[str, list[float]] = {
             name: [] for name in self.approach_names
         }
+        # Perspective-scaled queue tail (queue_tail_gap_boxes > 0): per stopped vehicle,
+        # (axis fraction, gap allowance in axis fraction, inside the Queue_Region).
+        stopped_items: dict[str, list[tuple[float, float, bool]]] = {
+            name: [] for name in self.approach_names
+        }
         window_frames = self._window_frames(dt)
         current_history: dict[int, deque[tuple[float, float]]] = {}
 
@@ -431,7 +464,17 @@ class MetricsEngine:
                 # axis; the reach is derived from all of them after the loop.
                 axis = self._axes.get(approach)
                 if axis is not None:
-                    stopped_positions[approach].append(axis.fraction(point))
+                    position = axis.fraction(point)
+                    stopped_positions[approach].append(position)
+                    if self._tail_gap_boxes > 0.0 and axis.length > 0.0:
+                        allowance = (
+                            self._tail_gap_boxes
+                            * float(getattr(track, "box_height", 0.0))
+                            / axis.length
+                        )
+                        stopped_items[approach].append(
+                            (position, allowance, bool(track.is_queueing))
+                        )
 
             # E7: one stop per moving-to-stopped transition. A track already stopped
             # on the previous frame is not counted again, so a vehicle standing for
@@ -444,10 +487,16 @@ class MetricsEngine:
         self._previous_points = current_points
         self._stopped_previous = stopped_now
         self._history = current_history
-        reach = {
-            name: queue_tail_reach(stopped_positions[name], self._tail_gap)
-            for name in self.approach_names
-        }
+        if self._tail_gap_boxes > 0.0:
+            reach = {
+                name: queue_tail_reach_scaled(stopped_items[name])
+                for name in self.approach_names
+            }
+        else:
+            reach = {
+                name: queue_tail_reach(stopped_positions[name], self._tail_gap)
+                for name in self.approach_names
+            }
 
         return {
             approach.name: self._measure(
@@ -1099,6 +1148,7 @@ __all__ = [
     "QueuePredictor",
     "clamp",
     "queue_tail_reach",
+    "queue_tail_reach_scaled",
     "compute_config_demands",
     "compute_config_scores",
     "compute_score",

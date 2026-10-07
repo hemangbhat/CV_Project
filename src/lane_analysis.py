@@ -145,7 +145,7 @@ class ApproachAxis:
     #: meaningful direction at all.
     MIN_DIRECTION_CONSENSUS: float = 0.50
 
-    __slots__ = ("origin", "_ux", "_uy", "length", "conditioning", "direction_source")
+    __slots__ = ("origin", "_ux", "_uy", "length", "conditioning", "direction_source", "_polyline")
 
     def __init__(
         self,
@@ -153,6 +153,7 @@ class ApproachAxis:
         queue_region: np.ndarray,
         direction: tuple[float, float] | None = None,
         direction_confidence: float = 1.0,
+        polyline: Sequence[Sequence[float]] | None = None,
     ) -> None:
         """Build the axis for one Approach.
 
@@ -168,6 +169,10 @@ class ApproachAxis:
         (the mean resultant length, 0..1), recorded as :attr:`conditioning` so that a
         measured axis and a geometric one expose the same trust signal.
         """
+        self._polyline: list[tuple[float, float, float, float, float, float]] | None = None
+        if polyline is not None:
+            self._init_from_polyline(polyline)
+            return
         if direction is not None:
             self._init_from_measured_direction(roi, direction, direction_confidence)
             return
@@ -258,6 +263,48 @@ class ApproachAxis:
         # needed: (p . u) - (origin . u) == (p . u) - a_min.
         self.conditioning = float(max(0.0, min(1.0, confidence)))
 
+    def _init_from_polyline(self, points: Sequence[Sequence[float]]) -> None:
+        """Build the axis from a drawn polyline: stop line first, far end last.
+
+        Each segment is stored with its start point, unit vector, length and the arc
+        length at which it starts, so :meth:`fraction` can project a point onto the
+        nearest segment and read off its distance from the stop line along the road.
+        """
+        self.direction_source = "drawn"
+        pts = [(float(p[0]), float(p[1])) for p in points]
+        segments = []
+        cumulative = 0.0
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            seg = math.hypot(bx - ax, by - ay)
+            if seg <= 0.0:
+                continue
+            segments.append((ax, ay, (bx - ax) / seg, (by - ay) / seg, seg, cumulative))
+            cumulative += seg
+        self._polyline = segments
+        self.origin = pts[0]
+        self.length = cumulative
+        self.conditioning = 1.0 if cumulative > 0.0 else 0.0
+        if segments:
+            self._ux, self._uy = segments[0][2], segments[0][3]
+        else:
+            self._ux, self._uy = 0.0, 0.0
+
+    def _polyline_fraction(self, px: float, py: float) -> float:
+        """Arc length from the stop line of ``(px, py)``'s projection, as a fraction.
+
+        The point is projected onto the nearest segment of the drawn polyline, so a
+        vehicle beside a curved road is measured along the road rather than along a
+        chord across it.
+        """
+        best_distance = math.inf
+        best_arc = 0.0
+        for ax, ay, ux, uy, seg, start in self._polyline or ():
+            t = min(max((px - ax) * ux + (py - ay) * uy, 0.0), seg)
+            distance = math.hypot(px - (ax + ux * t), py - (ay + uy * t))
+            if distance < best_distance:
+                best_distance, best_arc = distance, start + t
+        return min(max(best_arc / self.length, 0.0), 1.0)
+
     @property
     def upstream(self) -> tuple[float, float]:
         """The unit vector pointing upstream, away from the stop line.
@@ -288,6 +335,8 @@ class ApproachAxis:
         """
         if self.length <= 0.0:
             return False
+        if self.direction_source == "drawn":
+            return True
         if self.direction_source == "measured":
             return self.conditioning >= self.MIN_DIRECTION_CONSENSUS
         return self.conditioning >= self.MIN_CONDITIONING
@@ -301,6 +350,8 @@ class ApproachAxis:
         """
         if self.length <= 0.0:
             return 0.0
+        if self._polyline is not None:
+            return self._polyline_fraction(float(point[0]), float(point[1]))
         along = (float(point[0]) - self.origin[0]) * self._ux + (
             float(point[1]) - self.origin[1]
         ) * self._uy
@@ -613,6 +664,7 @@ def build_approach_axes(config: Config) -> dict[str, ApproachAxis]:
             as_cv_polygon(approach.queue_region),
             direction=approach.axis_direction,
             direction_confidence=approach.axis_confidence,
+            polyline=getattr(approach, "queue_axis", None),
         )
     return axes
 

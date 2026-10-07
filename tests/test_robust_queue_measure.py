@@ -171,3 +171,61 @@ def test_invalid_values_are_rejected(base: Config, tmp_path: Path, field, value)
     path.write_text(json.dumps(obj))
     with pytest.raises(ConfigError, match=field):
         load_config(str(path))
+
+
+# -- drawn queue axis (W7) and perspective-scaled tail ------------------------
+
+from src.lane_analysis import ApproachAxis, as_cv_polygon  # noqa: E402
+from src.traffic_metrics import queue_tail_reach_scaled  # noqa: E402
+
+SQUARE = as_cv_polygon([[0, 0], [400, 0], [400, 400], [0, 400]])
+
+
+def test_drawn_axis_measures_from_the_stop_line() -> None:
+    axis = ApproachAxis(SQUARE, SQUARE, polyline=[(100, 300), (100, 100)])
+    assert axis.direction_source == "drawn" and axis.well_conditioned
+    assert axis.fraction((100, 300)) == pytest.approx(0.0)
+    assert axis.fraction((100, 200)) == pytest.approx(0.5)
+    assert axis.fraction((130, 100)) == pytest.approx(1.0)     # beside the far end
+    assert axis.fraction((100, 380)) == pytest.approx(0.0)     # downstream of the line
+
+
+def test_drawn_axis_follows_a_bend_by_arc_length() -> None:
+    # An L-shaped road: 100 px up, then 100 px right.
+    axis = ApproachAxis(SQUARE, SQUARE, polyline=[(0, 200), (0, 100), (100, 100)])
+    assert axis.length == pytest.approx(200.0)
+    assert axis.fraction((0, 150)) == pytest.approx(0.25)
+    assert axis.fraction((50, 100)) == pytest.approx(0.75)
+
+
+def test_drawn_axis_overrides_measured_direction() -> None:
+    axis = ApproachAxis(SQUARE, SQUARE, direction=(1.0, 0.0), polyline=[(0, 0), (0, 100)])
+    assert axis.direction_source == "drawn"
+
+
+def test_scaled_tail_bridges_large_near_vehicles() -> None:
+    # Near the camera one car spans ~0.4 of the axis: a fixed 0.25 gap breaks the chain,
+    # a gap of two box heights (0.5 here) does not.
+    stopped = [(0.1, 0.5, True), (0.5, 0.5, False), (0.9, 0.5, False)]
+    assert queue_tail_reach_scaled(stopped) == pytest.approx(0.9)
+    assert queue_tail_reach([0.1, 0.5, 0.9], 0.25) == pytest.approx(0.1)
+
+
+def test_scaled_tail_starts_in_the_queue_region() -> None:
+    # First stopped vehicle sits 0.3 along the axis but inside the Queue_Region.
+    assert queue_tail_reach_scaled([(0.3, 0.1, True), (0.38, 0.1, False)]) == pytest.approx(0.38)
+    # The same vehicle outside the Queue_Region does not start a queue.
+    assert queue_tail_reach_scaled([(0.3, 0.1, False), (0.38, 0.1, False)]) == 0.0
+
+
+def test_scaled_tail_ignores_an_isolated_far_vehicle() -> None:
+    assert queue_tail_reach_scaled([(0.05, 0.1, True), (0.12, 0.1, False), (0.8, 0.1, False)]) == pytest.approx(0.12)
+
+
+def test_v2_geometry_loads_with_drawn_axes() -> None:
+    cfg = load_config(str(CALIBRATED.parent / "bellevue_116th_v2.json"))
+    axes = build_approach_axes(cfg)
+    assert all(axis.direction_source == "drawn" for axis in axes.values())
+    for approach in cfg.approaches:
+        # The first queue_axis point is the stop line: fraction 0.
+        assert axes[approach.name].fraction(approach.queue_axis[0]) == pytest.approx(0.0)
