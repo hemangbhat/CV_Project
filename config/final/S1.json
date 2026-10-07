@@ -1,15 +1,9 @@
 {
   "_comment": [
-    "Bellevue 116th Ave NE / NE 12th St, recalibrated geometry v2 (audit finding W7).",
-    "Each ROI covers ONLY the inbound lanes of one leg, its queue_region is a strip directly",
-    "behind the stop line, and queue_axis is drawn from the stop line back along the road.",
-    "Labels on this rotated fisheye view: North = top-left leg, East = top-right leg,",
-    "South = bottom-right leg, West = bottom-left leg. Polygons were placed from gridded",
-    "frames 600 and 2400 of the busy clip; saturation_count / queue_capacity are eyeballed",
-    "storage estimates (vehicles the ROI / strip holds). Verify with report/geometry_v2.png.",
-    "Robust measurement (W5): stopped = < 0.2 box heights/s over 1 s; queue tail gap 2 box heights; trend window 2.5 s."
+    "FINAL ARM S1: Raza-style density (a=1)",
+    "Inherits config/bellevue_116th_v2.json; only the score weights differ."
   ],
-  "alpha": 0.5,
+  "alpha": 1.0,
   "confidence_threshold": 0.3,
   "model_path": "models/yolov8n.pt",
   "track_buffer": 30,
