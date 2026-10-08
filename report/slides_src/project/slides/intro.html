@@ -1,0 +1,15 @@
+<section id="intro" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<p style="font-size:24px;color:#9A5B13;letter-spacing:2px;text-transform:uppercase;font-weight:600">1 · Introduction</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#14213D">What is vision-based adaptive signal control?</h2>
+<div style="display:flex;flex-direction:row;gap:64px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:30px;line-height:1.45">A junction repeatedly decides <b>which approach gets green next, and for how long</b>.</p>
+<p style="font-size:30px;line-height:1.45"><b>Fixed-time</b> plans repeat the same timings. <b>Adaptive</b> control measures traffic and decides from the measurement.</p>
+<p style="font-size:30px;line-height:1.45"><b>Vision-based</b>: a camera replaces loop detectors. YOLO detects vehicles, ByteTrack follows each one across frames.</p>
+<p style="font-size:30px;line-height:1.45">A loop detector sees <b>one spot</b>. A camera sees the <b>whole approach</b>, so it can measure <span style="color:#C0392B"><b>where the queue ends</b></span>.</p>
+</div>
+<img src="/_blob/c27ccfbc1d168dbe7fff3c2ce010930a" alt="Bellevue camera frame with detected vehicles, approaches and measured queue tails" style="width:860px;height:484px;object-fit:contain;border-radius:12px">
+</div>
+<p style="position:absolute;left:1020px;bottom:96px;width:780px;font-size:24px;color:#5A6472">Bellevue 116th Ave NE / NE 12th St camera, this project's demo overlay</p>
+<aside>Explain the decision a signal makes. Point at the frame: boxes are YOLO detections, the numbers are ByteTrack IDs, each coloured region is an approach, and the red marks show where the measured queue ends. The key idea: a camera sees the whole road, not just a spot.</aside>
+</section>

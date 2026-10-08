@@ -1,0 +1,22 @@
+<section id="c3delay" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;color:#14213D">Table 2: mean delay per vehicle (s), 20 test seeds, lower is better</h2>
+<div style="display:flex;flex-direction:row">
+<p style="width:22%;font-size:24px"> </p>
+<p style="width:39%;font-size:24px;font-weight:600;text-align:center;background:#E9E5DA;padding:6px">All approaches 150 m</p>
+<p style="width:39%;font-size:24px;font-weight:600;text-align:center;background:#DDE3EC;padding:6px">Minor street 60 m, major 150 m</p>
+</div>
+<table style="font-size:24px;color:#1E2A3A;background:#FFFFFF">
+<tr style="background:#EFECE4"><th style="width:22%">Method ↓ · veh/h →</th><th style="width:9.75%">1200</th><th style="width:9.75%">2400</th><th style="width:9.75%">3000</th><th style="width:9.75%">3600</th><th style="width:9.75%">1200</th><th style="width:9.75%">2400</th><th style="width:9.75%">3000</th><th style="width:9.75%">3600</th></tr>
+<tr><td>Fixed-time [1]</td><td>46.2</td><td>56.7</td><td>133.5</td><td>283.6</td><td>45.9</td><td>56.3</td><td>133.4</td><td>283.7</td></tr>
+<tr><td>Actuated [2]</td><td>20.9</td><td>30.5</td><td>45.5</td><td>99.9</td><td>20.4</td><td>30.0</td><td style="color:#B03020">45.6†</td><td>105.5</td></tr>
+<tr><td>Capacity-aware MP [4]</td><td style="color:#B03020">16.9†</td><td style="color:#B03020">26.3†</td><td>157.4</td><td>397.8</td><td style="color:#B03020">17.7†</td><td>37.3</td><td>167.6</td><td>389.5</td></tr>
+<tr><td>Raza-style [8]</td><td>53.6</td><td>85.6</td><td>131.2</td><td>253.5</td><td>53.2</td><td>77.8</td><td>91.9</td><td>165.2</td></tr>
+<tr><td>Raza + actuated</td><td>21.7</td><td>30.5</td><td>45.6</td><td>100.6</td><td>21.5</td><td>30.0</td><td>46.1</td><td>108.5</td></tr>
+<tr><td>+ storage barrier (9)</td><td>19.2</td><td>29.3</td><td>45.1</td><td style="color:#B03020">97.1†</td><td>19.2</td><td>29.4</td><td>46.1</td><td style="color:#B03020">103.7†</td></tr>
+<tr style="background:#FBF1E4"><td>Proposed* (9)+(10)</td><td>19.2</td><td>29.3</td><td style="color:#B03020">44.2†</td><td>190.8</td><td>19.2</td><td>29.1</td><td>46.4</td><td>186.2</td></tr>
+<tr><td>Proposed, count-based S</td><td>19.2</td><td>29.3</td><td>44.4</td><td>142.8</td><td>18.9</td><td style="color:#B03020">28.9†</td><td>46.5</td><td>156.3</td></tr>
+<tr><td>Proposed, camera errors</td><td>19.8</td><td>29.1</td><td>44.1</td><td>189.2</td><td>20.0</td><td>29.3</td><td>53.7</td><td>196.7</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#5A6472">† best per column among exact-sensor methods · * proposed · 1800 veh/h in the report · python -m sim.study2_figures</p>
+<aside>Read it like a super-resolution table: rows are methods, columns are conditions from easy to hard. Under capacity the proposed method beats Raza by about 65 percent and actuated by 1 to 2 seconds; capacity-aware max pressure is best at light demand. At 3000 the proposed method is best on the uniform junction. At 3600, beyond capacity, it is clearly worse than actuated: storage protection fails there, and I report that.</aside>
+</section>

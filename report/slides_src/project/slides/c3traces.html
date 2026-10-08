@@ -1,0 +1,11 @@
+<section id="c3traces" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px;display:flex;flex-direction:row;gap:48px;align-items:center">
+<img src="/_blob/0461d4d8b0297bde6c7d06a98172f986" alt="True queue tail over time on the North 150 m and East 60 m approaches for Raza-style, actuated, capacity-aware max pressure and the proposed method, one test seed" style="width:1100px;height:850px;object-fit:contain;background:#FFFFFF;border-radius:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;color:#14213D">Visual comparison: queues over time</h2>
+<p style="font-size:26px;line-height:1.45;color:#3D4756"><b>Raza-style</b> holds each green for its band: queues sit near the end of storage.</p>
+<p style="font-size:26px;line-height:1.45;color:#3D4756"><b>Capacity-aware MP</b> re-decides every 5 s and switches constantly; lost yellow time makes queues longer.</p>
+<p style="font-size:26px;line-height:1.45;color:#3D4756"><b>Actuated</b> and <b>proposed</b> serve short, queue-driven greens.</p>
+<p style="font-size:24px;line-height:1.4;color:#5A6472">One seed fixed in advance (short-minor, 3000 veh/h). On it the proposed method is slightly worse than actuated; over 20 seeds it has 20% less spillback.</p>
+</div>
+<aside>This plays the role of the face images in a super-resolution paper: what the methods do, not just their averages. I chose the seed before looking, and on this seed my method is slightly worse; the averages over 20 seeds are what count.</aside>
+</section>

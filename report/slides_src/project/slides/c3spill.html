@@ -1,0 +1,22 @@
+<section id="c3spill" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:48px;font-weight:600;color:#14213D">Table 3: local spillback, blocked-entry seconds, lower is better</h2>
+<div style="display:flex;flex-direction:row">
+<p style="width:28%;font-size:24px"> </p>
+<p style="width:36%;font-size:24px;font-weight:600;text-align:center;background:#E9E5DA;padding:6px">All approaches 150 m</p>
+<p style="width:36%;font-size:24px;font-weight:600;text-align:center;background:#DDE3EC;padding:6px">Minor street 60 m, major 150 m</p>
+</div>
+<table style="font-size:24px;color:#1E2A3A;background:#FFFFFF">
+<tr style="background:#EFECE4"><th style="width:28%">Method ↓ · veh/h →</th><th style="width:12%">2400</th><th style="width:12%">3000</th><th style="width:12%">3600</th><th style="width:12%">2400</th><th style="width:12%">3000</th><th style="width:12%">3600</th></tr>
+<tr><td>Fixed-time</td><td>164</td><td>2172</td><td>4135</td><td>652</td><td>3093</td><td>5441</td></tr>
+<tr><td>Actuated</td><td>7</td><td>121</td><td>2136</td><td>97</td><td>945</td><td style="color:#B03020">4097†</td></tr>
+<tr><td>Capacity-aware MP</td><td style="color:#B03020">7†</td><td>2442</td><td>6164</td><td style="color:#B03020">14†</td><td>3343</td><td>6495</td></tr>
+<tr><td>Raza-style</td><td>785</td><td>2366</td><td>4195</td><td>1957</td><td>3347</td><td>5361</td></tr>
+<tr><td>Raza + actuated</td><td>7</td><td>132</td><td>2153</td><td>103</td><td>983</td><td>4160</td></tr>
+<tr><td>+ storage barrier (9)</td><td>7</td><td>114</td><td style="color:#B03020">2105†</td><td>92</td><td>982</td><td>4161</td></tr>
+<tr style="background:#FBF1E4"><td>Proposed* (9)+(10)</td><td>7</td><td style="color:#B03020">89†</td><td>3193</td><td>79</td><td style="color:#B03020">753†</td><td>4326</td></tr>
+<tr><td>Proposed, count-based S</td><td>7</td><td>104</td><td>2718</td><td>81</td><td>869</td><td>4365</td></tr>
+<tr><td>Proposed, camera errors</td><td>7</td><td>81</td><td>3143</td><td>92</td><td>922</td><td>4340</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#5A6472">† best per column among exact-sensor methods · below 2400 veh/h every actuated method has under 10 s · full table: results/sim/study2/tables.md</p>
+<aside>This is the table where the enhancement earns its place. At 3000 vehicles per hour, near capacity, the proposed method has the least spillback on both junctions: 89 versus 121 seconds for actuated on the uniform junction, 753 versus 945 on the short-road junction, at the same delay. Beyond capacity, at 3600, it has more spillback, consistent with the delay table.</aside>
+</section>

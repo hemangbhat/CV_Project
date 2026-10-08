@@ -1,0 +1,21 @@
+<section id="methods" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#14213D">Relevant methods, their equations and limitations</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:18px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<h3 style="font-size:34px;font-weight:600;color:#14213D">Raza et al. (base)</h3>
+<p style="font-family:'IBM Plex Mono', 'Courier New', monospace;font-size:26px">Dᵢ = Σ nᵢ,c · PCE_c   (3)<br>p = argmax Dᵢ<br>g = band(Dₚ)</p>
+<p style="font-size:26px;line-height:1.4;color:#3D4756"><i>Limitation:</i> 10 cars on a 60 m road and on a 150 m road look the same; a green never ends early.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<h3 style="font-size:34px;font-weight:600;color:#14213D">Capacity-aware MP</h3>
+<p style="font-family:'IBM Plex Mono', 'Courier New', monospace;font-size:26px">p = argmax nᵢ / Cᵢ   (4)<br>re-decided every 5 s</p>
+<p style="font-size:26px;line-height:1.4;color:#3D4756"><i>Limitation:</i> reacts to every small change; under heavy demand it switches often and loses time to yellows.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<h3 style="font-size:34px;font-weight:600;color:#14213D">FASC (Mohajerpoor)</h3>
+<p style="font-family:'IBM Plex Mono', 'Courier New', monospace;font-size:26px">xₚ ≤ βₚ Λₚ   (Eq. 9)<br>+ Σ Λₚ / (αₚΛₚ − δₚ)   (5)</p>
+<p style="font-size:26px;line-height:1.4;color:#3D4756"><i>Limitation:</i> queue position δₚ comes from a shockwave model and predicted demand, not a measurement.</p>
+</div>
+</div>
+<aside>Three equations to remember. Raza's is a count. Capacity-aware max pressure divides the count by the road's capacity. FASC constrains the queue to its link length and adds a penalty that explodes as the queue nears the end of the road. My method takes FASC's penalty and constraint, and feeds them a camera measurement.</aside>
+</section>

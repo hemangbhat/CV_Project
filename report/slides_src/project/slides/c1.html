@@ -1,0 +1,19 @@
+<section id="c1" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:row;gap:56px">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;color:#9A5B13;letter-spacing:2px;text-transform:uppercase;font-weight:600">C1 · Robust spatial queue measurement</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:56px;font-weight:600;color:#14213D">Where the queue ends, from detections and tracks</h2>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FFFFFF;padding:28px 32px;border-radius:16px;border:1px solid #E1DED5">
+<p style="font-size:26px;line-height:1.4"><b>(6) stopped:</b> moved &lt; 0.2 × own box length in 1 s</p>
+<p style="font-size:26px;line-height:1.4"><b>(7) X:</b> last car of the contiguous stopped chain from the stop line, along the drawn queue axis</p>
+<p style="font-size:26px;line-height:1.4"><b>(8) S</b> = clamp(X + dX/dt × 5 s)</p>
+</div>
+<table style="font-size:26px;color:#1E2A3A;background:#FFFFFF">
+<tr style="background:#E9E5DA"><th style="width:52%">Busy clip</th><th style="width:24%">Original</th><th style="width:24%">Robust</th></tr>
+<tr><td>Stops per vehicle</td><td>4.28</td><td><b>0.76</b></td></tr>
+<tr><td>North: X jumps &gt; 0.3</td><td>7.3%</td><td><b>0.06%</b></td></tr>
+<tr><td>West: X jumps &gt; 0.3</td><td>4.8%</td><td><b>0.5%</b></td></tr>
+</table>
+</div>
+<img src="/_blob/8ba9e86746dfb0b8b7d8e9fd188a3da3" alt="Measured queue tail drawn on real Bellevue frames for each approach" style="width:740px;height:832px;object-fit:contain;border-radius:12px">
+<aside>The stopped test is scaled by each vehicle's own size, which handles perspective with no camera calibration. X is the end of the contiguous chain of stopped cars. Results: false stops fell from 4.28 to 0.74 per vehicle and jumps in X almost disappeared. The picture shows the tail on real frames: correct where cars are detected; the limit is detector recall far away.</aside>
+</section>

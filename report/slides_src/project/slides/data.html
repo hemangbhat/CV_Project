@@ -1,0 +1,22 @@
+<section id="data" data-transition="fade" style="background:#F7F6F2;color:#1E2A3A;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:44px">
+<p style="font-size:24px;color:#9A5B13;letter-spacing:2px;text-transform:uppercase;font-weight:600">8 · Data, testbed and evaluation measures</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;color:#14213D">Real video for measurement, simulation for control</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<x-icon name="Play" style="color:#14213D;width:56px;height:56px"></x-icon>
+<h3 style="font-size:34px;font-weight:600;color:#14213D">Video</h3>
+<p style="font-size:26px;line-height:1.4;color:#3D4756">City of Bellevue Traffic Video Dataset; 116th Ave NE / NE 12th St; clips of 107, 240 and 240 s at 30 fps.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<x-icon name="Settings" style="color:#14213D;width:56px;height:56px"></x-icon>
+<h3 style="font-size:34px;font-weight:600;color:#14213D">SUMO testbed</h3>
+<p style="font-size:26px;line-height:1.4;color:#3D4756">Simulation of Urban MObility. 4-arm junction, 2 lanes, 3 s yellow. A virtual camera computes D, Q, X, S with the video definitions; a noise mode drops 30% of far vehicles, 2 m jitter.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FFFFFF;padding:36px;border-radius:16px;border:1px solid #E1DED5">
+<x-icon name="Chart" style="color:#14213D;width:56px;height:56px"></x-icon>
+<h3 style="font-size:34px;font-weight:600;color:#14213D">Measures</h3>
+<p style="font-size:26px;line-height:1.4;color:#3D4756"><b>Mean delay</b> per vehicle (s). <b>Blocked-entry seconds</b>: local spillback. 95% CIs over 20 paired seeds. Protocol committed before the test seeds.</p>
+</div>
+</div>
+<aside>Video answers "does the measurement work". Simulation answers "does control improve", because simulated cars respond to my signal. Like PSNR and SSIM in super-resolution, delay and spillback are the two measures. Every free setting was chosen on separate validation seeds before the final test.</aside>
+</section>
