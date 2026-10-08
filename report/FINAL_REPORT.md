@@ -39,6 +39,18 @@ than fixed-time in most scenarios. We explain the null result, and it is the mai
 when X matters most, X saturates too, at the edge of the camera's view, and at decision
 time it ranks the approaches the same way density already does.
 
+A second pre-registered study then uses the measurement where Mohajerpoor et al. (IEEE
+T-ITS 2023) say spatial queue information matters: in the green timing, relative to each
+approach's own storage. A one-term change to the Raza-style score (a reciprocal storage
+barrier on S) plus one timing rule (after 20 s of green, end it when a waiting approach's
+S reaches 0.85 of its storage) was tested on junctions with equal and unequal storage over
+five demand levels, against fixed-time, actuated, capacity-aware max pressure and the
+Raza-style base (20 paired test seeds). Near capacity it **reduces local spillback by
+20–26% against actuated control at no delay cost**, and on the short-road junction the
+camera's spatial measure beats a stopped-vehicle count (−115 s of blocked entry). Beyond
+capacity the protection rule fails and roughly doubles delay, the regime in which
+Mohajerpoor et al. note that spillback avoidance must be relaxed (§6.6).
+
 ---
 
 ## 1. Problem
@@ -339,6 +351,38 @@ rank-equivalent to the existing terms rather than adding new ranking information
 | E7 | stop counting | identical across controllers on recorded video (open loop) |
 | E8 | count forecast F | inert on the busy clip, active on the dev clip; no closed-loop effect |
 | E9/S | spatial reach X and risk S | measurement works after the fixes; no closed-loop control effect |
+
+### 6.6 Study 2: storage-aware score and storage protection
+
+Protocol `sim/PROTOCOL_STUDY2.md` (validation seeds 0–9, selection rule written before the
+guard results were seen, committed before test seeds 200–219 ran). Code `sim/study2.py`,
+tables `results/sim/study2/tables.md`, figures `report/figures/study2/`.
+
+Method, as a change to Raza's selection rule `argmax D_i`:
+
+```
+score_i = D_i + λ (1/(α − S_i) − 1/α)      λ = 1, α = 1.1     (Mohajerpoor et al.'s reciprocal penalty)
+green:  actuated 10–60 s, 2 s passage; after 20 s, end if a waiting j has S_j ≥ 0.85 and S_j > S_active
+```
+
+`D_i` is storage-blind (one common normaliser); `S_i` is relative to each approach's own
+storage. Junctions: all approaches 150 m, or minor street 60 m. Demand 1200–3600 veh/h.
+
+| Paired comparison (20 seeds, 95% CI) | Result |
+|---|---|
+| vs Raza-style | delay −34 to −87 s in 9 of 10 conditions; +21.0 ± 10.5 s at short-minor 3600 |
+| vs actuated, ≤ 2400 veh/h | delay −0.9 to −1.7 s (significant, small) |
+| vs actuated, 3000 veh/h | blocked entry −31.9 ± 20.6 s (−26%, uniform), −191.8 ± 73.3 s (−20%, short minor); delay n.s. |
+| protection alone (vs barrier only), 3000 veh/h | blocked entry −25.3 ± 19.1 s and −229.2 ± 70.3 s; delay n.s. |
+| camera reach vs stopped count, short minor 3000 | blocked entry −115.4 ± 81.2 s |
+| vs actuated, 3600 veh/h | delay +90.9 ± 9.8 s and +80.7 ± 8.1 s (protection fails beyond capacity) |
+| camera errors | holds to 2400 veh/h; short-minor 3000 benefit mostly lost (922 vs 753 blocked s; actuated 945) |
+| capacity-aware max pressure | best delay at ≤ 1800 veh/h (about 2 s better); collapses at ≥ 3000 (switches every 5 s) |
+
+So the same measurement that was useless in the selection score (§6.3) is useful as a
+storage constraint on the green, near capacity. Most of the delay gain over Raza still
+comes from actuated timing. Full write-up in the department presentation format:
+`report/RESEARCH_PRESENTATION.md`.
 
 ## 7. Discussion
 

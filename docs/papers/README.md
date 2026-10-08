@@ -18,4 +18,15 @@ Facts about Raza used in the report, checked against the PDF (§III, Algorithm 1
   label noise, and multimodal sensor fusion. "Reactive, current-density-only allocation" is this
   project's own analysis of the method, not a limitation the authors list.
 
+**Study 2 reference (not stored here: the copy we have is a licensed IEEE Xplore download):**
+R. Mohajerpoor, C. Cai, M. Ramezani, "Optimal Traffic Signal Control of Isolated Oversaturated
+Intersections Using Predicted Demand," *IEEE T-ITS* 24(1), 815–826, 2023,
+doi:10.1109/TITS.2022.3209606. Facts used, checked against the PDF: the FASC algorithm sets
+dynamic cycle lengths and splits from predicted demand and a shockwave queue model; the
+spillback-avoidance constraint `x_p(k) ≤ β_p Λ_p` (Eq. 9, β = 1 major and 5 minor in their
+experiment); the mixed delay + spillback-probability objective with the reciprocal term
+`Λ_p / (α_p Λ_p − δ_p(k))` (Eq. 17); queue-formation and queue-discharging regimes; the remark
+that spillback is often unavoidable in the queue-formation period; Aimsun experiment against
+fixed, actuated and capacity-aware max pressure (5 s decisions), 63/55/40% less delay.
+
 Further T-ITS work considered for this project: `docs/research/additional_tits_papers.md`.

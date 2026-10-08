@@ -15,12 +15,14 @@ OUT = Path("COMPLETE_PROJECT_DOCUMENT.md")
 
 # (title of the part in the combined document, source file, what to keep)
 PARTS = [
-    ("Overview", "README.md", "from:## The result in four sentences"),
+    ("Overview", "README.md", "from:## The result in five points"),
+    ("Research Presentation (department format)", "report/RESEARCH_PRESENTATION.md", "all"),
     ("Final Report", "report/FINAL_REPORT.md", "all"),
     ("System Architecture", "docs/architecture.md", "all"),
     ("Technical Guide", "docs/TECHNICAL_GUIDE.md", "from:## 1. The problem in one paragraph"),
     ("Audit Report", "AUDIT_REPORT.md", "all"),
     ("Closed-Loop Experiment Protocol", "sim/PROTOCOL.md", "all"),
+    ("Study 2 Protocol (storage-aware control)", "sim/PROTOCOL_STUDY2.md", "all"),
     ("The Papers (verified facts)", "docs/papers/README.md", "all"),
     ("Additional Recent T-ITS Papers", "docs/research/additional_tits_papers.md", "all"),
     ("Glossary of Concepts and Terms", "PROJECT_EXPLAINED.md", "from:## Part 2 — Traffic-engineering terms"),
@@ -31,10 +33,34 @@ PARTS = [
 # "In simple terms" notes, keyed by (source file, heading text as written in the source).
 SIMPLE: dict[tuple[str, str], str] = {
     # ---------------- README ----------------
-    ("README.md", "The result in four sentences"):
+    ("README.md", "The result in five points"):
         "The camera measurement now works. The old \"+21%\" result was a measurement mistake. "
         "In a fair test, adding queue reach to the decision did not reduce delay. What reduced "
-        "delay was ending each green once its queue has cleared.",
+        "delay was ending each green once its queue has cleared. Used instead to protect each "
+        "road's storage, the measurement cut spillback by about a fifth near capacity, but "
+        "made things worse when traffic exceeded capacity.",
+    # ---------------- RESEARCH PRESENTATION ----------------
+    ("report/RESEARCH_PRESENTATION.md", "4. Problem formulation"):
+        "The camera estimates where each queue ends; the controller must choose who goes next "
+        "and for how long, keeping total waiting low and keeping each queue from reaching the "
+        "start of its road.",
+    ("report/RESEARCH_PRESENTATION.md", "5. Related literature and research gaps"):
+        "Each earlier method and what it cannot do. The gap: camera controllers count cars but "
+        "do not know where the queue ends; spillback-aware methods need that but have to guess it "
+        "from models.",
+    ("report/RESEARCH_PRESENTATION.md", "7. Objectives"):
+        "Four goals: measure the queue from video, test it in the ranking, test it as a storage "
+        "limit on green time, and check it still works with camera errors.",
+    ("report/RESEARCH_PRESENTATION.md", "C3 — Storage-aware score and storage protection (study 2)"):
+        "One extra term in Raza's formula and one rule for ending green early. It helps near "
+        "capacity (about 20-26% less spillback, same waiting time), loses badly beyond capacity, "
+        "and most of the gain over Raza comes from ending greens when queues clear.",
+    ("report/RESEARCH_PRESENTATION.md", "11. Summary and key takeaways"):
+        "Where the camera information is used matters more than what is measured. It was "
+        "useless for choosing the next road and useful as a storage limit near capacity.",
+    ("sim/PROTOCOL_STUDY2.md", "Question"):
+        "The rules for the second experiment, written down before the final test, including how "
+        "the settings were chosen on separate practice runs.",
     ("README.md", "Read in this order"):
         "A reading list. This combined document already contains all of these files.",
     ("README.md", "Repository map"):
@@ -387,7 +413,7 @@ def main() -> None:
         "**Vision-Measured Spatial Queue Reach for Adaptive Traffic Signal Control**",
         "",
         "Every project document in one file: overview, final report, architecture, technical",
-        "guide, audit, experiment protocol, papers, glossary, viva answers and study plan.",
+        "guide, audit, experiment protocols, papers, glossary, viva answers and study plan.",
         "After every part there is a short **💡 In simple terms** box that says what the",
         "part means in plain language.",
         "",
@@ -402,7 +428,10 @@ def main() -> None:
         "> reliably, found and proved that an earlier \"+21%\" result was a mistake, and ran a fair",
         "> simulation test (7,920 runs) where cars obey the light. The measurement works, but it",
         "> does not change which road gets green, and I explain why. What really reduces waiting",
-        "> is ending each green once its queue has cleared.",
+        "> is ending each green once its queue has cleared. In a second test (study 2), using",
+        "> the measurement to protect each road's storage, as Mohajerpoor et al. (2023) do with a",
+        "> model, cut spillback by about a fifth near capacity at no extra waiting, but failed",
+        "> beyond capacity.",
         "",
     ]
     OUT.write_text("\n".join(header + toc) + "\n" + "".join(sections), encoding="utf-8")

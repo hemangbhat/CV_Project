@@ -325,3 +325,54 @@ test, and I say so.
 `python -m src.main control --video videos/bellevue_116th_busy.mp4 --config config/final/S4.json --track-cache results/track_cache/bellevue_116th_busy__yolov8m__c0p30.json.gz --overlay demo`
 shows boxes, IDs, the four approaches, each queue axis with a red bar at the measured
 queue tail, and a panel with D, Q, X, S, F, score, signal and remaining green.
+
+## E. Study 2: storage-aware control (Mohajerpoor-style)
+
+**"So does your enhancement improve anything?"**
+Near capacity, yes. At 3000 veh/h, storage protection reduces local spillback (blocked-entry
+seconds) by 26% on the uniform junction and 20% on the junction with a 60 m side street,
+against standard actuated control, with no significant change in delay (20 paired test
+seeds, 95% CIs exclude zero for spillback). Against the Raza-style base it cuts delay by
+34–87 s in 9 of 10 conditions, but the ablation shows most of that is actuated timing.
+Beyond capacity (3600 veh/h) it makes delay about twice as bad, and I report that.
+
+**"Why did X/S work in study 2 but not in study 1?"**
+In study 1, X entered the *ranking*. When a green ends, the longest queue is also the one
+with most vehicles, so X ranks approaches exactly as density does and the argmax never
+changes. In study 2, S enters the *timing*, relative to each approach's *own* storage: a
+10-vehicle queue on a 60 m road is nearly full, on a 150 m road it is not. A count with one
+normaliser cannot tell those apart. That is Mohajerpoor et al.'s formulation: a
+spillback constraint `x ≤ β·link length` and a penalty `1/(α·link length − queue)`.
+
+**"What exactly is your equation?"**
+`score_i = D_i + λ (1/(α − S_i) − 1/α)`, λ = 1, α = 1.1. Raza's equation is `score_i = D_i`;
+mine differs by one term. Timing: actuated, 10–60 s, 2 s passage time; after 20 s of green,
+end it if a waiting approach has S ≥ 0.85 and more than the active one.
+
+**"Why does it fail beyond capacity?"**
+When every approach is near full, some waiting approach is always at S ≥ 0.85, so the rule
+keeps cutting greens. Each switch costs a 3 s yellow, capacity drops, and queues grow
+further. Mohajerpoor et al. say exactly this: in the queue-formation period spillback is
+often unavoidable and the constraint must be relaxed (they let the minor road queue to 5×
+its length). My 20 s guard reduced the damage on validation but did not remove it. The fix
+I would build next is a regime switch: turn protection off when all approaches are near
+full at once.
+
+**"Is the camera actually needed, or would counting do?"**
+I tested that with a control (PROP_CNT) that builds S from a stopped-vehicle count instead
+of the measured queue tail. In most conditions the two are the same. On the short-road
+junction near capacity, the camera's measured tail gives 115 s less blocked entry
+(significant). So the spatial measurement matters exactly where queues are long relative
+to the road, and not elsewhere.
+
+**"Did you tune it on the test data?"**
+No. λ, β and the guard were chosen on validation seeds 0–9 by a selection rule I wrote down
+before seeing the guard results (`sim/PROTOCOL_STUDY2.md`). No guard met my criterion, and
+the protocol says so; the frozen setting is the least bad one. The test seeds 200–219 were
+run once, after that file was committed.
+
+**"Capacity-aware max pressure beats you at low demand. Why not use it?"**
+It does, by about 2 s at ≤ 1800 veh/h. It re-decides every 5 s, which is ideal when queues
+are short, but under heavy demand it switches constantly and loses capacity to yellows
+(157 s delay at 3000 veh/h versus 44 s for mine). I report it as the best method at light
+demand.

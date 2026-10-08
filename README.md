@@ -12,7 +12,7 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 → own enhancement (queue axis, queue tail X, spillback risk S) → ablation → measured result
 ```
 
-## The result in four sentences
+## The result in five points
 
 1. **The measurement works.** After three CV corrections (a perspective-normalised
    stopped test, a contiguous queue tail, and recalibrated geometry with drawn stop-line
@@ -29,11 +29,18 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 4. **What does matter is the green-time rule.** Actuated timing roughly halves delay
    against fixed-time, and cuts it about 9× under unequal over-saturated demand. Raza-style
    score bands are worse than fixed-time in most scenarios.
+5. **Used in the green timing instead, the measurement helps near capacity.** Study 2
+   (pre-registered, `sim/PROTOCOL_STUDY2.md`) adds a Mohajerpoor-style storage barrier and
+   storage protection. At 3000 veh/h it cuts local spillback by 20–26% against actuated
+   control at no delay cost; on a junction with a 60 m side street the camera's spatial
+   measure beats a stopped-vehicle count. Beyond capacity the protection rule fails
+   (delay roughly doubles). `report/RESEARCH_PRESENTATION.md` has the full results.
 
 ## Read in this order
 
 | Document | What it is for |
 |---|---|
+| [`report/RESEARCH_PRESENTATION.md`](report/RESEARCH_PRESENTATION.md) | **The project in the department's research-presentation format:** problem formulation, literature table with limitations, gaps, objectives, workflow, contributions C1–C3 with result tables, takeaways |
 | [`COMPLETE_PROJECT_DOCUMENT.md`](COMPLETE_PROJECT_DOCUMENT.md) | **Everything in one file:** report, architecture, technical guide, audit, protocol, papers, glossary, viva answers and study plan, with an "In simple terms" box after every part |
 | [`PROJECT_EXPLAINED.md`](PROJECT_EXPLAINED.md) | Every concept, term and abbreviation (SUMO, YOLO, ByteTrack, PCE, MPC, CI, ...) with its full form, meaning and role in this project |
 | [`report/FINAL_REPORT.md`](report/FINAL_REPORT.md) | The research report: problem → Raza → Li/Wei → enhancement → experiments → results → limitations |
@@ -42,9 +49,10 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 | [`docs/VIVA_QA.md`](docs/VIVA_QA.md) | Exact answers to the 32 expected questions and the hard follow-ups |
 | [`AUDIT_REPORT.md`](AUDIT_REPORT.md) | What was wrong with the earlier results, how it was found, how it was fixed |
 | [`sim/PROTOCOL.md`](sim/PROTOCOL.md) | The closed-loop experiment, frozen before the test runs |
+| [`sim/PROTOCOL_STUDY2.md`](sim/PROTOCOL_STUDY2.md) | Study 2 (storage-aware control), its validation history and selection rule |
 | [`docs/architecture.md`](docs/architecture.md) | System diagram and module map |
 | [`docs/research/`](docs/research/) | Literature review and limitation analysis of the papers |
-| [`docs/papers/`](docs/papers/) | The papers (the Raza PDF in the repo is damaged and the Li paper is missing — see its README) |
+| [`docs/papers/`](docs/papers/) | The papers and their verified facts |
 | [`docs/archive/`](docs/archive/) | Pre-audit documents, kept for the record; their headline results are superseded |
 
 ## Repository map
@@ -95,6 +103,11 @@ python -m sim.experiment run --seeds 100-119 --out results/sim/test_exact.jsonl
 python -m sim.experiment table --results results/sim/test_exact.jsonl
 python -m sim.figures
 python -m sim.decision_analysis
+
+# 5. Study 2: storage-aware control (about 1.5 h on 4 cores), tables and figures
+python -m sim.study2 run --seeds 200-219 --out results/sim/study2/test_exact.jsonl
+python -m sim.study2 run --seeds 200-219 --methods PROP --noise vision --out results/sim/study2/test_vision.jsonl
+python -m sim.study2_figures
 ```
 
 ## Data
@@ -112,3 +125,5 @@ research), three clips of 107 s, 240 s and 240 s re-encoded to a constant 30 fps
   filling its *visible* storage.
 * It does not claim that the spatial score terms improve control. The closed-loop test
   shows they do not, and explains why.
+* It does not claim that storage protection helps in general. It helps near capacity and
+  fails beyond it; both are reported.

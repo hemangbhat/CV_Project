@@ -103,7 +103,7 @@ def method_flow() -> None:
     steps = (
         (3.6, "1. Detect + track\nYOLOv8m, ByteTrack;\nbottom-centre point\nassigned to an approach"),
         (6.4, "2. Spatial queue\nwindowed stopped test;\ncontiguous queue tail X\nas share of storage;\nS = X + slope x 5 s"),
-        (9.2, "3. Storage-aware decision\nscore = D + lam*(1/(a-S) - 1/a)\nactuated green 10-60 s;\nend green if waiting S >= beta"),
+        (9.2, "3. Storage-aware decision\nscore = D + lam*(1/(a-S) - 1/a)\nactuated green 10-60 s;\nafter 20 s, end green if a\nwaiting S >= 0.85"),
         (11.9, "4. Signal\nGREEN -> YELLOW 3 s\n-> next approach"),
     )
     for k, (x, t) in enumerate(steps):

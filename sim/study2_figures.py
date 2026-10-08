@@ -104,6 +104,8 @@ def curves(summary: dict, metric: str, ylabel: str, fname: str, log: bool) -> No
         ax.grid(alpha=0.3)
         if log:
             ax.set_yscale("symlog" if metric == "blocked_seconds" else "log")
+            if metric == "mean_delay":
+                ax.set_ylim(10, 600)
     axes[0].set_ylabel(ylabel)
     axes[1].legend(fontsize=8, loc="upper left")
     fig.tight_layout()
@@ -129,8 +131,10 @@ def queue_traces(cond: str = "short_minor_3000", seed: int = 200) -> None:
         ax.grid(alpha=0.3)
     axes[0].legend(fontsize=8, loc="upper right")
     axes[-1].set_xlabel("simulation time (s)")
-    fig.suptitle(f"True queue tail on a major (North) and a short minor (East) approach, {cond}, seed {seed}\n"
-                 "(dash-dot line = end of the approach's storage)", fontsize=10)
+    fig.suptitle(f"True queue tail on a major (North) and a short minor (East) approach, {cond}, test seed {seed}\n"
+                 "(dash-dot = end of storage; the tail is the last stopped vehicle's front, so a full 60 m road reads ~0.8;\n"
+                 "one seed, fixed in advance - on this seed the proposed method is slightly worse than actuated; see tables for means)",
+                 fontsize=9)
     fig.tight_layout()
     fig.savefig(FIGS / "fig_s2_queue_traces.png", dpi=160)
     plt.close(fig)
