@@ -228,7 +228,9 @@ class _Phase:
 
 
 def run(cond: str, method: Method, seed: int, noise_name: str = "exact",
-        workdir: Path = Path("results/sim/runs2")) -> dict:
+        workdir: Path = Path("results/sim/runs2"), trace: list | None = None) -> dict:
+    """One run. If ``trace`` is a list, one row per second is appended to it:
+    (time, active approach, signal state, true queue tail per approach as a share of storage)."""
     import libsumo as traci
 
     scenario, lengths = condition(cond)
@@ -291,7 +293,7 @@ def run(cond: str, method: Method, seed: int, noise_name: str = "exact",
             if pending:
                 blocked += STEP * len({_approach_of(v) for v in pending})
 
-            metrics, counts, qregion, stopped_frac, pressure = {}, {}, {}, {}, {}
+            metrics, counts, qregion, pressure, tails = {}, {}, {}, {}, {}
             for a in APPROACHES:
                 vehicles = []
                 for vid in traci.edge.getLastStepVehicleIDs(in_edge(a)):
@@ -306,6 +308,8 @@ def run(cond: str, method: Method, seed: int, noise_name: str = "exact",
                 max_tail[a] = max(max_tail[a], truth.queue_reach)
                 if truth.queue_reach >= FULL_FRACTION:
                     full_seconds[a] += STEP
+                if trace is not None and step % int(FRAME_RATE) == 0:
+                    tails[a] = truth.queue_reach
                 seen = observe(vehicles, geometry[a], noise, rng) if noise.active else vehicles
                 m = measure_approach(a, seen, geometry[a], **kw) if noise.active else truth
                 stopped = [v for v in seen if v.speed < cfg.stopped_speed_ratio * v.length]
@@ -317,6 +321,8 @@ def run(cond: str, method: Method, seed: int, noise_name: str = "exact",
                 qregion[a] = m.queue_length
                 pce = sum(cfg.pce_weights.get(v.vehicle_class, 1.0) for v in seen)
                 pressure[a] = pce / policy.capacity[a]
+            if trace is not None and tails:
+                trace.append((now, active, state, dict(tails)))
             metrics = predictor.predict(metrics)
             obs = {
                 "count": counts,
