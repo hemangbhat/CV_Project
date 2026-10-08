@@ -52,17 +52,26 @@ def in_edge(approach: str) -> str:
     return f"{_PREFIX[approach]}_in"
 
 
-def build_network(directory: Path = BUILD_DIR) -> Path:
-    """Write and netconvert the junction; return the ``.net.xml`` path (cached)."""
+def build_network(directory: Path = BUILD_DIR, lengths: dict[str, float] | None = None) -> Path:
+    """Write and netconvert the junction; return the ``.net.xml`` path (cached).
+
+    ``lengths`` gives each approach's inbound length (its storage) in metres; by
+    default every approach is ``APPROACH_LENGTH`` long (the study-1 junction).
+    """
     directory.mkdir(parents=True, exist_ok=True)
-    net = directory / "junction.net.xml"
+    if lengths is None or all(lengths[a] == APPROACH_LENGTH for a in APPROACHES):
+        stem = "junction"
+        lengths = {a: APPROACH_LENGTH for a in APPROACHES}
+    else:
+        stem = "junction_" + "_".join(f"{lengths[a]:g}" for a in APPROACHES)
+    net = directory / f"{stem}.net.xml"
     if net.exists():
         return net
-    far = APPROACH_LENGTH
     nodes = ['<nodes>', '  <node id="C" x="0" y="0" type="traffic_light"/>']
     edges = ['<edges>']
     for approach, ((dx, dy), _) in _GEOMETRY.items():
         p = _PREFIX[approach]
+        far = lengths[approach]
         nodes.append(f'  <node id="{p}" x="{dx * far}" y="{dy * far}" type="priority"/>')
         edges.append(
             f'  <edge id="{p}_in" from="{p}" to="C" numLanes="{LANES}" speed="{SPEED}"/>'
@@ -72,13 +81,13 @@ def build_network(directory: Path = BUILD_DIR) -> Path:
         )
     nodes.append('</nodes>')
     edges.append('</edges>')
-    (directory / "junction.nod.xml").write_text("\n".join(nodes) + "\n")
-    (directory / "junction.edg.xml").write_text("\n".join(edges) + "\n")
+    (directory / f"{stem}.nod.xml").write_text("\n".join(nodes) + "\n")
+    (directory / f"{stem}.edg.xml").write_text("\n".join(edges) + "\n")
     subprocess.run(
         [
             sumo_binary("netconvert"),
-            "--node-files", str(directory / "junction.nod.xml"),
-            "--edge-files", str(directory / "junction.edg.xml"),
+            "--node-files", str(directory / f"{stem}.nod.xml"),
+            "--edge-files", str(directory / f"{stem}.edg.xml"),
             "--no-turnarounds", "true",
             "--junctions.corner-detail", "0",
             "--no-internal-links", "false",
