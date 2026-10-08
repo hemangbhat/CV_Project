@@ -47,6 +47,19 @@ validation conditions, among those whose mean delay is no more than 5% above PRO
 *every* heavy condition. If none qualifies, PROP is frozen as the variant with the
 smallest worst-case delay increase, and reported as failing the criterion.
 
+**Outcome of the rule (validation, heavy conditions, delay relative to PROP_B):**
+
+| variant | worst delay increase | mean blocked-entry s | qualifies |
+|---|---|---|---|
+| slack (S_active < 0.5) | +293% | 2193 | no (the guard never fired: an approach that is discharging always has S < 0.5) |
+| after20 | +94% | 1365 | no |
+| slack + after20 | +94% | 1365 | no (identical to after20) |
+
+No variant qualifies. **PROP is frozen with `protect_after = 20 s`** (smallest worst-case
+increase) and is reported as failing the criterion beyond capacity. On validation it
+reduces blocked-entry time near capacity (short_minor 3000 veh/h: 861 → 650 s at +3%
+delay) and increases delay beyond capacity (3600 veh/h: +94% uniform, +76% short_minor).
+
 ## Test (seeds 200-219, 20 seeds, run once after this file is committed)
 * All 8 methods × 10 conditions, `exact`; PROP also under `vision`.
 * Primary metric: mean delay per vehicle (time loss + insertion delay).

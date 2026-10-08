@@ -113,9 +113,12 @@ class Method:
     protect_after: float = MIN_GREEN
 
 
-#: Frozen after validation (seeds 0-9); see PROTOCOL_STUDY2.md.
+#: Frozen after validation (seeds 0-9); see PROTOCOL_STUDY2.md. No guarded variant met
+#: the pre-stated criterion; PROTECT_AFTER is the one with the smallest worst-case
+#: delay increase, as the protocol prescribes.
 LAM = 1.0
 BETA = 0.85
+PROTECT_AFTER = 20.0
 METHODS: dict[str, Method] = {
     "FT": Method("FT", "fixed-time 30 s", "rr", "fixed"),
     "ACT": Method("ACT", "actuated (stop-line gap-out)", "rr_skip", "actuated"),
@@ -124,9 +127,9 @@ METHODS: dict[str, Method] = {
     "RAZA_A": Method("RAZA_A", "Raza-style density + actuated", "raza", "actuated"),
     "PROP_B": Method("PROP_B", "+ storage barrier on S", "prop", "actuated", lam=LAM, beta=BETA),
     "PROP": Method("PROP", "proposed: barrier + storage protection", "prop", "actuated",
-                   protect=True, lam=LAM, beta=BETA),
+                   protect=True, lam=LAM, beta=BETA, protect_after=PROTECT_AFTER),
     "PROP_CNT": Method("PROP_CNT", "control: proposed with count-based S", "prop", "actuated",
-                       protect=True, spatial="count", lam=LAM, beta=BETA),
+                       protect=True, spatial="count", lam=LAM, beta=BETA, protect_after=PROTECT_AFTER),
 }
 
 
