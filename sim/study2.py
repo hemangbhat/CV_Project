@@ -106,6 +106,11 @@ class Method:
     lam: float = 1.0
     alpha: float = 1.1
     beta: float = 0.85
+    #: Protection may cut the active green only while the active approach itself has
+    #: storage slack (its own S below this). 1.0 disables the guard.
+    slack: float = 1.0
+    #: Protection may cut the active green only after this much green.
+    protect_after: float = MIN_GREEN
 
 
 #: Frozen after validation (seeds 0-9); see PROTOCOL_STUDY2.md.
@@ -201,8 +206,10 @@ class Policy:
             self._empty_since = None
         if green >= MIN_GREEN and self._empty_since is not None and now - self._empty_since >= PASSAGE:
             return True
-        if m.protect and green >= MIN_GREEN:
+        if m.protect and green >= m.protect_after:
             own = obs["risk"][active]
+            if own >= m.slack:
+                return False
             return any(obs["risk"][a] >= m.beta and obs["risk"][a] > own
                        for a in APPROACHES if a != active)
         return False
@@ -391,6 +398,8 @@ def main() -> None:
     r.add_argument("--noise", default="exact")
     r.add_argument("--lam", type=float, default=None)
     r.add_argument("--beta", type=float, default=None)
+    r.add_argument("--slack", type=float, default=None)
+    r.add_argument("--protect-after", type=float, default=None)
     r.add_argument("--out", required=True)
     r.add_argument("--workers", type=int, default=4)
     t = sub.add_parser("table")
@@ -401,9 +410,10 @@ def main() -> None:
         methods = []
         for name in args.methods.split(","):
             m = METHODS[name]
-            if args.lam is not None or args.beta is not None:
-                m = dataclasses.replace(m, lam=args.lam if args.lam is not None else m.lam,
-                                        beta=args.beta if args.beta is not None else m.beta)
+            changes = {k: v for k, v in (("lam", args.lam), ("beta", args.beta), ("slack", args.slack),
+                                         ("protect_after", args.protect_after)) if v is not None}
+            if changes:
+                m = dataclasses.replace(m, **changes)
             methods.append(m)
         run_grid(args.conditions.split(","), methods, parse_seeds(args.seeds), args.noise.split(","),
                  Path(args.out), args.workers)
