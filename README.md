@@ -40,6 +40,7 @@ Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (
 
 | Document | What it is for |
 |---|---|
+| [`docs/EXPLAIN_TO_PROFESSOR.md`](docs/EXPLAIN_TO_PROFESSOR.md) | **Read first before presenting:** the story, what is mine vs borrowed, key numbers, 20-minute talk plan, hard questions |
 | [`report/RESEARCH_PRESENTATION.md`](report/RESEARCH_PRESENTATION.md) | **The project in the department's research-presentation format:** problem formulation, literature table with limitations, gaps, objectives, workflow, contributions C1–C3 with result tables, takeaways |
 | [`COMPLETE_PROJECT_DOCUMENT.md`](COMPLETE_PROJECT_DOCUMENT.md) | **Everything in one file:** report, architecture, technical guide, audit, protocol, papers, glossary, viva answers and study plan, with an "In simple terms" box after every part |
 | [`PROJECT_EXPLAINED.md`](PROJECT_EXPLAINED.md) | Every concept, term and abbreviation (SUMO, YOLO, ByteTrack, PCE, MPC, CI, ...) with its full form, meaning and role in this project |

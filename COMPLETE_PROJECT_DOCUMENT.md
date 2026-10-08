@@ -21,23 +21,24 @@ files in the repository.
 > is ending each green once its queue has cleared. In a second test (study 2), using
 > the measurement to protect each road's storage, as Mohajerpoor et al. (2023) do with a
 > model, cut spillback by about a fifth near capacity at no extra waiting, but failed
-> beyond capacity.
+> beyond capacity. Start with Part 2: how to explain all of this to the professor.
 
 ## Contents
 
 1. [Overview](#part-1) — from `README.md`
-2. [Research Presentation (department format)](#part-2) — from `report/RESEARCH_PRESENTATION.md`
-3. [Final Report](#part-3) — from `report/FINAL_REPORT.md`
-4. [System Architecture](#part-4) — from `docs/architecture.md`
-5. [Technical Guide](#part-5) — from `docs/TECHNICAL_GUIDE.md`
-6. [Audit Report](#part-6) — from `AUDIT_REPORT.md`
-7. [Closed-Loop Experiment Protocol](#part-7) — from `sim/PROTOCOL.md`
-8. [Study 2 Protocol (storage-aware control)](#part-8) — from `sim/PROTOCOL_STUDY2.md`
-9. [The Papers (verified facts)](#part-9) — from `docs/papers/README.md`
-10. [Additional Recent T-ITS Papers](#part-10) — from `docs/research/additional_tits_papers.md`
-11. [Glossary of Concepts and Terms](#part-11) — from `PROJECT_EXPLAINED.md`
-12. [Viva Questions and Answers](#part-12) — from `docs/VIVA_QA.md`
-13. [Study Guide and Presentation Plan](#part-13) — from `docs/STUDY_GUIDE.md`
+2. [Explaining the Project to the Professor](#part-2) — from `docs/EXPLAIN_TO_PROFESSOR.md`
+3. [Research Presentation (department format)](#part-3) — from `report/RESEARCH_PRESENTATION.md`
+4. [Final Report](#part-4) — from `report/FINAL_REPORT.md`
+5. [System Architecture](#part-5) — from `docs/architecture.md`
+6. [Technical Guide](#part-6) — from `docs/TECHNICAL_GUIDE.md`
+7. [Audit Report](#part-7) — from `AUDIT_REPORT.md`
+8. [Closed-Loop Experiment Protocol](#part-8) — from `sim/PROTOCOL.md`
+9. [Study 2 Protocol (storage-aware control)](#part-9) — from `sim/PROTOCOL_STUDY2.md`
+10. [The Papers (verified facts)](#part-10) — from `docs/papers/README.md`
+11. [Additional Recent T-ITS Papers](#part-11) — from `docs/research/additional_tits_papers.md`
+12. [Glossary of Concepts and Terms](#part-12) — from `PROJECT_EXPLAINED.md`
+13. [Viva Questions and Answers](#part-13) — from `docs/VIVA_QA.md`
+14. [Study Guide and Presentation Plan](#part-14) — from `docs/STUDY_GUIDE.md`
 
 ---
 
@@ -77,6 +78,7 @@ files in the repository.
 
 | Document | What it is for |
 |---|---|
+| [`docs/EXPLAIN_TO_PROFESSOR.md`](docs/EXPLAIN_TO_PROFESSOR.md) | **Read first before presenting:** the story, what is mine vs borrowed, key numbers, 20-minute talk plan, hard questions |
 | [`report/RESEARCH_PRESENTATION.md`](report/RESEARCH_PRESENTATION.md) | **The project in the department's research-presentation format:** problem formulation, literature table with limitations, gaps, objectives, workflow, contributions C1–C3 with result tables, takeaways |
 | [`COMPLETE_PROJECT_DOCUMENT.md`](COMPLETE_PROJECT_DOCUMENT.md) | **Everything in one file:** report, architecture, technical guide, audit, protocol, papers, glossary, viva answers and study plan, with an "In simple terms" box after every part |
 | [`PROJECT_EXPLAINED.md`](PROJECT_EXPLAINED.md) | Every concept, term and abbreviation (SUMO, YOLO, ByteTrack, PCE, MPC, CI, ...) with its full form, meaning and role in this project |
@@ -186,7 +188,233 @@ research), three clips of 107 s, 240 s and 240 s re-encoded to a constant 30 fps
 ---
 
 <a id="part-2"></a>
-# Part 2 — Research Presentation (department format)
+# Part 2 — Explaining the Project to the Professor
+
+*Source: `docs/EXPLAIN_TO_PROFESSOR.md`*
+
+This is the document to study before the presentation. It gives the story in the order
+the professor expects (existing paper → limitation → newer research → enhancement →
+implementation → comparison → conclusion), states exactly **what is mine and what is
+borrowed**, lists the numbers to know by heart, and gives a 20-minute talk plan with the
+slide for each minute. Details behind every statement are in
+`report/RESEARCH_PRESENTATION.md` (the full write-up in presentation order) and
+`docs/TECHNICAL_GUIDE.md` (how each part works).
+
+---
+
+### 1. The project in five sentences
+
+1. **Base paper:** Raza et al. (IEEE Access 2025) control a traffic signal from a camera:
+   YOLO counts vehicles, the counts are weighted by PCE into a density, and the densest
+   approach gets green for a fixed band of time.
+2. **Limitation (my analysis):** the state is a *count*. It does not know where the queue
+   ends, or how much road each approach has, so 10 cars on a 60 m road and 10 cars on a
+   150 m road look the same, though the first road is almost full.
+3. **Newer research:** Mohajerpoor et al. (IEEE T-ITS 2023) show that avoiding spillback
+   (a queue reaching the start of its road) needs the queue's *position*, and they use it
+   as a constraint on green timing. But they cannot see the queue; they *estimate* its
+   position with a traffic-flow model, predicted demand and loop detectors.
+4. **My enhancement:** measure the queue position directly from video (YOLO + ByteTrack +
+   my queue-tail measurement), and use it as a storage limit inside Raza's real-time
+   controller.
+5. **Result:** near capacity it cuts local spillback by 20–26% against standard actuated
+   control at the same delay, and on a short road the camera measurement beats a simple
+   count. Beyond capacity it fails. I show both.
+
+---
+
+### 2. What is mine, and what is borrowed
+
+This is the question a strict examiner asks first. Answer it before it is asked.
+
+| Part | Source | What I did |
+|---|---|---|
+| YOLOv8 detection, ByteTrack tracking | Existing tools (Ultralytics, Zhang et al. 2022) | Used them; added a track cache so every experiment replays identical tracks |
+| PCE density score, argmax selection, starvation guard | Raza et al. 2025 | Re-implemented as the baseline ("Raza-style", not a reproduction) |
+| **Queue axis** drawn along each road | **Mine** | Positions measured as a fraction of the road from the stop line, no camera calibration |
+| **Perspective-normalised stopped test** | **Mine** | "Stopped" = moved less than 0.2 of its own box length in 1 s, so near and far cars are judged the same |
+| **Contiguous queue tail X, risk S** | **Mine** | X = last car of the chain of stopped cars starting at the stop line; S = X projected 5 s ahead |
+| Spillback constraint `x ≤ β·L` and the reciprocal penalty `1/(α·L − x)` | Mohajerpoor et al. 2023 | Borrowed the idea and the shape |
+| **Online rule instead of an optimiser** | **Mine** | FASC solves a non-convex optimisation over whole cycles with predicted demand; I turned the idea into a per-step rule (no forecast, no solver) inside Raza's controller |
+| **Camera measurement in place of their model** | **Mine** | The queue position they estimate, I measure |
+| Actuated green with 2 s passage time; 20 s protection guard | Standard practice / **mine** | The passage-time fix and the guard came from my own experiments |
+| **Experiments** | **Mine** | Audit of the earlier result; study 1 (10 controllers × 9 scenarios × 20 seeds); study 2 (8 methods × 10 conditions × 20 seeds); count-based control; camera-noise test; pre-registered protocols |
+
+**The sentence to say:**
+> "Raza controls signals from a camera but only counts vehicles. Mohajerpoor shows spillback
+> avoidance needs the queue's position but has to estimate it with a model. My enhancement
+> measures the queue position directly from video and uses it as a storage limit inside
+> Raza's real-time controller. I test it against standard and published baselines, show
+> that the camera measurement beats counting on short roads, and find where it stops
+> working."
+
+**Why this is a legitimate enhancement:** it is built the same way as the department's own
+work. T-DLcR is LcR with a borrowed noise filter (AMF) built into a new dictionary step.
+The contribution is the combination, the adaptation, and the evidence that it helps.
+
+---
+
+
+> 💡 **In simple terms:** The tools (YOLO, ByteTrack), the base controller (Raza) and the shape of the storage formula (Mohajerpoor) are borrowed and cited. Measuring where the queue ends from video, building it into a real-time controller, and all the experiments are yours.
+
+### 3. The story, step by step
+
+#### 3.1 The problem
+A junction decides, again and again, which approach gets green and for how long. Fixed-time
+plans ignore traffic. Adaptive control measures traffic. A camera can measure more than a
+loop detector: a loop sees one spot, a camera sees the whole road.
+
+#### 3.2 The base paper and its limitation
+Raza: `D_i = Σ count × PCE`, green to `argmax D_i`, green time from a band (40/60/120 s in
+the paper; 30/45/60 s here). Limitation: count-only and storage-blind; fixed bands never
+end a green early.
+
+#### 3.3 First attempt (study 1), and why it failed
+I measured X and S and added them to the score. Pre-registered closed-loop test in SUMO:
+no effect (±0.5 s; 1 decision in 40 changed). **Reason:** when a green ends, the longest
+queue is also the one with most cars, so X ranks approaches exactly like the count.
+**Lesson:** spatial information can only matter in the *timing*, and relative to *each
+road's own length*. This is what Mohajerpoor's formulation does, so it shaped study 2.
+
+The same test showed what does matter: the green-time rule. Actuated timing (end the green
+once the stop-line zone has been empty for 2 s) roughly halves delay against fixed-time.
+
+#### 3.4 The enhancement (study 2)
+```
+Raza:      score_i = D_i
+Proposed:  score_i = D_i + λ (1/(α − S_i) − 1/α)          λ = 1, α = 1.1
+Timing:    actuated green, 10–60 s; after 20 s, end it if a waiting road has S ≥ 0.85
+           and a higher S than the road that is green
+```
+`D_i` is storage-blind (one normaliser for all roads, as in Raza). `S_i` is the camera's
+queue tail as a share of *that road's own* length, so it is storage-aware.
+
+#### 3.5 How it was tested
+* SUMO (Simulation of Urban MObility): simulated cars stop and go because of *my* signal,
+  which recorded video cannot do.
+* A virtual camera computes D, Q, X, S with the same definitions as the video pipeline,
+  with an optional noise mode (30% of far cars missed, 2 m jitter).
+* Two junctions: all roads 150 m; or the side street shortened to 60 m.
+* Five demand levels: 1200, 1800, 2400, 3000, 3600 veh/h (well under to beyond capacity).
+* Eight methods: fixed-time, actuated, capacity-aware max pressure, Raza-style, Raza with
+  actuated timing, + barrier, **proposed**, proposed with a count instead of the camera.
+* Settings chosen on validation seeds 0–9 by a rule written down beforehand; the final
+  test ran once on seeds 200–219.
+
+#### 3.6 The results
+| Comparison | Result |
+|---|---|
+| vs Raza-style | 34–87 s less delay per vehicle in 9 of 10 conditions; most of this is actuated timing |
+| vs actuated, under capacity | 0.9–1.7 s less delay (small, significant) |
+| vs actuated, near capacity (3000 veh/h) | **26% and 20% less spillback**, delay unchanged |
+| camera vs count, short road, 3000 veh/h | camera: 115 s less spillback |
+| beyond capacity (3600 veh/h) | **fails**: delay about doubles |
+| capacity-aware max pressure | best at light demand (about 2 s less delay), collapses under heavy demand |
+| with camera errors | holds up to 2400 veh/h; near capacity on the short road most of the benefit is lost |
+
+#### 3.7 Why it fails beyond capacity
+When every road is near full, some waiting road always has S ≥ 0.85, so the rule keeps
+cutting greens. Each switch costs a 3 s yellow; capacity falls; queues grow. Mohajerpoor
+says the same: in the queue-formation period spillback is often unavoidable and the
+constraint must be relaxed. **Next step:** detect that regime from the camera (all roads
+near full at once) and switch protection off.
+
+---
+
+### 4. Numbers to know by heart
+
+| Number | Meaning |
+|---|---|
+| 4.28 → 0.76 | false stops per vehicle, before → after the robust stopped test |
+| ±0.5 s, 1 in 40 | study 1: effect of X/S in the score; decisions changed |
+| 300.6 → 33.8 s | study 1: fixed-time vs actuated, unequal over-saturated demand |
+| 53.6 → 19.2 s | study 2: Raza-style vs proposed, uniform 1200 veh/h |
+| 121 → 89 s | study 2: blocked entry, actuated vs proposed, uniform 3000 veh/h (−26%) |
+| 945 → 753 s | study 2: same, short-road junction (−20%) |
+| −115 s | camera measurement vs count, short road, 3000 veh/h |
+| 99.9 → 190.8 s | study 2: actuated vs proposed beyond capacity (uniform 3600): the failure |
+| 20 seeds, 95% CI | every comparison is paired over 20 random demand realisations |
+
+---
+
+### 5. Twenty-minute talk, slide by slide
+
+The deck follows this order (`report/slides_src/`, 28 slides).
+
+| Minutes | Slides | What to say |
+|---|---|---|
+| 0–1 | Cover, contents | One-line summary of the project |
+| 1–3 | Introduction, challenges, applications | What a signal decides; camera vs loop; why queues from video are hard |
+| 3–4 | Problem formulation | Eq. 1 measurement, Eq. 2 control, delay objective with the storage constraint |
+| 4–7 | Taxonomy, Table 1 (two slides), relevant methods | Each method's limitation; the gap between Raza (camera, counts) and Mohajerpoor (position, but modelled) |
+| 7–8 | Gaps, objectives | Four objectives; objective 3 is the main enhancement |
+| 8–9 | Workflow, data | Video for measurement, SUMO for control, delay and spillback as measures |
+| 9–11 | Method flow, C1 | How X is measured; 4.28 → 0.76; the validation image |
+| 11–12 | C2 | First attempt failed, and why: this designed C3 |
+| 12–17 | C3: method, borrowed vs mine, Tables 2–3, curves, traces, paired tests | The one-term change; results by demand level; near capacity it works, beyond capacity it fails |
+| 17–19 | Contributions, summary, takeaways | Mine vs borrowed; regime switch as next step |
+| 19–20 | References, questions | |
+
+Have the demo video ready (`results/videos/README.md` has the command) in case the
+professor asks to see the measurement on real footage.
+
+---
+
+
+> 💡 **In simple terms:** About one minute per slide for the background, most time on the method and the results tables, and finish with what is yours and what comes next.
+
+### 6. Hard questions and short answers
+
+**"Isn't this just Mohajerpoor's method?"**
+No. Mohajerpoor *models* the queue position and optimises whole cycles with predicted
+demand. I *measure* it from video and use it in a per-step rule inside Raza's vision
+controller. I borrowed the constraint's form; the measurement, the controller design and
+the evidence are mine. The count-based control shows the measurement itself matters on
+short roads.
+
+**"Your method loses beyond capacity. Why present it?"**
+Because the comparison is fair and the failure has a known cause. Near capacity it reduces
+spillback by a fifth at no delay cost, which is where spillback prevention is needed
+before it becomes unavoidable. The failure tells me exactly what to build next.
+
+**"Most of the gain over Raza is actuated timing. What is left for you?"**
+Against Raza, yes. Against actuated control, which is the stronger baseline, my
+contribution is the 20–26% spillback reduction near capacity, and the camera-vs-count
+result. I report both.
+
+**"Why simulation and not the video?"**
+Recorded cars obey the real signal, not mine, so video cannot show what my signal would
+have done. Video is used to validate the measurement; SUMO to test control. The earlier
+"+21% throughput" on video turned out to be an artefact for exactly this reason.
+
+**"Did you tune on the test data?"**
+No. λ, β and the guard were chosen on validation seeds 0–9 by a rule written before the
+guard results were seen (`sim/PROTOCOL_STUDY2.md`). No guard met the criterion, and the
+protocol says so. The test seeds ran once.
+
+**"What is spillback here?"**
+Local spillback: the queue reaches the upstream end of the visible approach, so arriving
+cars cannot enter (blocked-entry seconds). I do not detect downstream spillback.
+
+More questions with full answers: `docs/VIVA_QA.md` (sections A–E).
+
+---
+
+### 7. Things not to say
+
+| Do not say | Say instead |
+|---|---|
+| "I invented the spillback constraint" | "I measured what Mohajerpoor's constraint needs, from video" |
+| "It improves traffic by 60%" | "Against the Raza-style base, mostly through actuated timing; against actuated, 20–26% less spillback near capacity" |
+| "It always helps" | "It helps near capacity and fails beyond it" |
+| "We detect spillback" | "Local storage-exhaustion on the visible approach" |
+| "We reproduced Raza / Mohajerpoor" | "A Raza-style baseline; a Mohajerpoor-inspired rule" |
+| "The video shows less waiting" | "Recorded vehicles cannot react; control is tested in SUMO" |
+
+---
+
+<a id="part-3"></a>
+# Part 3 — Research Presentation (department format)
 
 *Source: `report/RESEARCH_PRESENTATION.md`*
 
@@ -585,6 +813,15 @@ method serve in short, queue-driven greens. On this particular seed the proposed
 slightly worse than actuated; across the 20 seeds it has 20% less spillback at the same
 delay (Table 3).
 
+**What is borrowed and what is this project's own**
+
+| Borrowed | Own |
+|---|---|
+| YOLOv8, ByteTrack | Queue axis, perspective-normalised stopped test, contiguous queue tail X and risk S (C1) |
+| Raza's PCE density score and starvation guard | Measuring the queue position instead of modelling it |
+| Mohajerpoor's storage constraint and reciprocal penalty (their shape) | Turning their optimisation into an online rule inside Raza's controller; the 20 s guard; the passage-time fix |
+| Max pressure, actuated control (baselines) | Both studies, the count-based control, the camera-noise test, the pre-registered protocols |
+
 **Contributions**
 * A storage-aware extension of a vision controller that is a one-term change to the base
   equation (Eq. 9) plus one timing rule (Eq. 10), both taken from Mohajerpoor et al.'s
@@ -656,8 +893,8 @@ delay (Table 3).
 
 ---
 
-<a id="part-3"></a>
-# Part 3 — Final Report
+<a id="part-4"></a>
+# Part 4 — Final Report
 
 *Source: `report/FINAL_REPORT.md`*
 
@@ -1179,8 +1416,8 @@ design decision each one led to.
 
 ---
 
-<a id="part-4"></a>
-# Part 4 — System Architecture
+<a id="part-5"></a>
+# Part 5 — System Architecture
 
 *Source: `docs/architecture.md`*
 
@@ -1273,8 +1510,8 @@ records that frame as `selection_score_frame`.
 
 ---
 
-<a id="part-5"></a>
-# Part 5 — Technical Guide
+<a id="part-6"></a>
+# Part 6 — Technical Guide
 
 *Source: `docs/TECHNICAL_GUIDE.md`*
 
@@ -1748,13 +1985,57 @@ python -m sim.figures
 python -m sim.decision_analysis
 ```
 
+
 > 💡 **In simple terms:** Copy-paste commands to regenerate all results.
 
+### 20. Study 2: storage-aware score and storage protection
+
+**Code:** `sim/study2.py` (methods, `Policy`, `run`), `sim/study2_figures.py` (tables and
+figures), `tests/test_study2.py`. **Protocol:** `sim/PROTOCOL_STUDY2.md`.
+
+**Junctions.** `sim/scenario.py: build_network(lengths=...)` builds the junction with a
+length per approach: `uniform` (all 150 m) or `short_minor` (East/West 60 m). The virtual
+camera's ROI is each approach's whole length, so X and S are shares of *that* road.
+
+**Demand.** Total 1200–3600 veh/h, split N 35% / S 30% / E 20% / W 15%, Poisson, 5% heavy
+vehicles, 1800 s with 300 s warm-up.
+
+**The proposed decision** (`Policy.choose`, select = "prop"):
+```
+score_i = D_i + λ (1/(α − S_i) − 1/α)       λ = 1, α = 1.1, S capped at 1
+```
+`D_i` uses one common normaliser (jam capacity of 150 m), so it is Raza's storage-blind
+count. The starvation guard of the Raza-style controller is kept (an approach with traffic
+may be passed over at most 3 times). Worked example: D = 0.5, S = 0.4 → 0.5 + 0.52 = 1.02;
+D = 0.3, S = 0.95 → 0.3 + 5.76 = 6.06, so the nearly full short road wins.
+
+**The proposed timing** (`Policy.should_end`):
+1. end at 60 s (max green);
+2. actuated gap-out: after 10 s, end when the stop-line zone (20 m) has been empty for 2 s;
+3. protection: after 20 s, end if some waiting road j has `S_j ≥ 0.85` and `S_j > S_active`.
+
+**Baselines.** FT: round robin, 30 s. ACT: round robin skipping empty roads, timing 1–2.
+CMP: after 10 s, every 5 s, end if another road has a higher `PCE count / jam capacity`;
+the next green goes to the highest such ratio. RAZA: `AdaptiveController` with the S1
+config and 30/45/60 s bands. RAZA_A, PROP_B: ablations. PROP_CNT: as PROP, but
+`S` is built from `stopped vehicles / jam capacity` instead of the measured tail.
+
+**Measures.** Mean delay (time loss + insertion delay); blocked-entry seconds (arrivals
+that cannot enter because the queue reaches the upstream end); paired 95% t-intervals
+over test seeds 200–219.
+
+**Reproduce:**
+```bash
+python -m sim.study2 run --seeds 200-219 --out results/sim/study2/test_exact.jsonl
+python -m sim.study2 run --seeds 200-219 --methods PROP --noise vision --out results/sim/study2/test_vision.jsonl
+python -m sim.study2_figures        # tables.md, summary.json, report/figures/study2/
+```
+Results and their interpretation: `report/RESEARCH_PRESENTATION.md` §10 C3.
 
 ---
 
-<a id="part-6"></a>
-# Part 6 — Audit Report
+<a id="part-7"></a>
+# Part 7 — Audit Report
 
 *Source: `AUDIT_REPORT.md`*
 
@@ -2098,8 +2379,8 @@ the closed-loop result whatever it is, and exact answers to the 32 viva question
 
 ---
 
-<a id="part-7"></a>
-# Part 7 — Closed-Loop Experiment Protocol
+<a id="part-8"></a>
+# Part 8 — Closed-Loop Experiment Protocol
 
 *Source: `sim/PROTOCOL.md`*
 
@@ -2153,8 +2434,8 @@ to the signal**, compared with the count-based queue (Q) and the count-based for
 
 ---
 
-<a id="part-8"></a>
-# Part 8 — Study 2 Protocol (storage-aware control)
+<a id="part-9"></a>
+# Part 9 — Study 2 Protocol (storage-aware control)
 
 *Source: `sim/PROTOCOL_STUDY2.md`*
 
@@ -2234,8 +2515,8 @@ delay) and increases delay beyond capacity (3600 veh/h: +94% uniform, +76% short
 
 ---
 
-<a id="part-9"></a>
-# Part 9 — The Papers (verified facts)
+<a id="part-10"></a>
+# Part 10 — The Papers (verified facts)
 
 *Source: `docs/papers/README.md`*
 
@@ -2272,8 +2553,8 @@ Further T-ITS work considered for this project: `docs/research/additional_tits_p
 
 ---
 
-<a id="part-10"></a>
-# Part 10 — Additional Recent T-ITS Papers
+<a id="part-11"></a>
+# Part 11 — Additional Recent T-ITS Papers
 
 *Source: `docs/research/additional_tits_papers.md`*
 
@@ -2352,8 +2633,8 @@ main finding, and Zhu et al. strengthens future work. Neither requires new exper
 
 ---
 
-<a id="part-11"></a>
-# Part 11 — Glossary of Concepts and Terms
+<a id="part-12"></a>
+# Part 12 — Glossary of Concepts and Terms
 
 *Source: `PROJECT_EXPLAINED.md`*
 
@@ -2498,6 +2779,28 @@ one component at a time to see what each contributes.
 **Argmax** means "pick the option with the highest value": the approach with the highest
 score gets green.
 
+#### Study 2 methods (`sim/study2.py`)
+
+| Method | What it is |
+|---|---|
+| **FT** | Fixed-time, 30 s each, round robin |
+| **ACT** | Actuated: round robin, skips empty roads, green 10–60 s, ends when the stop-line zone is empty for 2 s |
+| **CMP** | Capacity-aware max pressure (Gregoire et al. 2015): every 5 s, serve the road with the largest vehicles ÷ capacity |
+| **RAZA** | Raza-style density + 30/45/60 s bands |
+| **RAZA_A** | Raza-style density, actuated timing (ablation) |
+| **PROP_B** | + storage barrier on S in the score (ablation) |
+| **PROP** | **Proposed:** barrier + storage protection (after 20 s of green, end it if a waiting road has S ≥ 0.85) |
+| **PROP_CNT** | Control: PROP with S built from a stopped-vehicle count instead of the camera's queue tail |
+
+| Term | Meaning |
+|---|---|
+| **Storage** | The length of road an approach has for queueing (150 m or 60 m here) |
+| **Storage-aware / storage-blind** | Whether a measure accounts for how long each road is. Raza's count is storage-blind; S is a share of each road's own length |
+| **Storage barrier** | The term λ(1/(α − S) − 1/α): close to 0 for short queues, very large near the end of the road |
+| **Storage protection** | The timing rule that ends a green early to stop a waiting road from filling up |
+| **β (beta)** | The share of storage at which protection acts (0.85) |
+| **Guard** | Protection may act only after 20 s of green, so greens are not cut too short |
+
 ---
 
 
@@ -2515,7 +2818,11 @@ score gets green.
 | **Raza et al. 2025** | Base paper: edge YOLO + PCE density + Algorithm 1 (GDC, density argmax, 120/60/40 s bands); evaluated in SUMO and on real footage |
 | **Li et al. 2025 (T-ITS)** | Corridor signal coordination with queue-profile estimation; minimises over-saturation and stops |
 | **Wei et al. 2025 (T-ITS)** | Hierarchical predictive control of a network with queue dynamics; prevents spillback |
-| **Mohajerpoor, Cai & Ramezani 2023 (T-ITS)** | Single over-saturated junction; uses *predicted* demand and spillback probability to set *timing*; supports this project's finding |
+| **Mohajerpoor, Cai & Ramezani 2023 (T-ITS)** | Single over-saturated junction. FASC algorithm: sets cycle lengths and splits from *predicted* demand, a shockwave queue model, a spillback constraint (queue ≤ β × link length) and a penalty that grows near the end of the link. Source of study 2's storage term and rule |
+| **FASC** | Mohajerpoor's algorithm name (from the paper): optimal signal control of an isolated over-saturated junction |
+| **Shockwave / kinematic-wave model** | A traffic-flow model of how the back of a queue moves; Mohajerpoor uses it to *estimate* queue position. This project *measures* it instead |
+| **Queue formation (QF) / queue discharging (QD)** | Mohajerpoor's two over-saturated regimes: demand above capacity (queues grow) and afterwards (queues clear). Study 2 fails in the QF-like regime |
+| **Max pressure / capacity-aware max pressure** | Varaiya 2013 / Gregoire et al. 2015: serve the road with the largest queue pressure; the capacity-aware version divides by road capacity |
 | **Zhu et al. 2024/25 (T-ITS)** | Queue length from *sparse* vehicle trajectories; relevant to missed far-away detections |
 | **"et al."** | "and others" (co-authors) |
 | **Edge computing / edge node** | Running the AI on a small device next to the road instead of in the cloud |
@@ -2575,7 +2882,10 @@ and network models. A single camera at one junction provides none of those. The
 | **t-interval** | A CI computed with the Student-t distribution (for small samples like 20 seeds) | Method used |
 | **Statistical significance** | The CI excludes 0 | Only one marginal cell, consistent with chance |
 | **Multiple comparisons** | Testing many things means some look significant by luck (~1 in 20 at 95%) | Why one marginal cell is not reported as an effect |
-| **Validation vs test seeds** | Seeds 0–3 for design decisions; seeds 100–119 for the reported results | Prevents tuning to the results |
+| **Validation vs test seeds** | Study 1: seeds 0–3 for design, 100–119 reported. Study 2: seeds 0–9 for design, 200–219 reported | Prevents tuning to the results |
+| **Selection rule** | A rule, written before seeing results, for choosing among design variants | Study 2's guard was chosen this way (`sim/PROTOCOL_STUDY2.md`) |
+| **Demand level** | Total vehicles per hour arriving at the junction (1200–3600 in study 2) | The graded condition, like noise density in a super-resolution table |
+| **Under / near / beyond capacity** | Demand well below, close to, or above what the junction can serve | The proposed method helps near capacity and fails beyond it |
 | **Pre-registration / frozen protocol** | Writing the experiment plan down and committing it *before* running the test | `sim/PROTOCOL.md`; the git history proves the order |
 | **Warm-up** | The first 300 s, excluded so the junction starts filled | Standard simulation practice |
 | **Confound** | A hidden second change that could explain a result | S3 → S4 also changed the base weight 0.7 → 0.4 |
@@ -2639,7 +2949,10 @@ and network models. A single camera at one junction provides none of those. The
 | `docs/STUDY_GUIDE.md` | A 7-day plan to learn the project, exercises, a 10-minute talk outline and a demo checklist |
 | `AUDIT_REPORT.md` | What was wrong in the earlier results (W1–W7), the evidence, and how each was fixed |
 | `docs/architecture.md` | System diagram and module map |
+| `docs/EXPLAIN_TO_PROFESSOR.md` | **Start here before the presentation:** the story, what is mine vs borrowed, numbers, 20-minute talk plan, hard questions |
+| `report/RESEARCH_PRESENTATION.md` | The project in the department's presentation format, with all result tables |
 | `sim/PROTOCOL.md` | The closed-loop experiment plan, frozen before the test runs |
+| `sim/PROTOCOL_STUDY2.md` | Study 2's plan, validation history and selection rule |
 | `docs/research/` | Literature review, limitation analysis of the papers, additional T-ITS papers |
 | `docs/papers/` | The PDFs of Raza, Li and Wei, plus verified facts about Raza |
 | `docs/archive/` | Old documents whose results are superseded, kept for the record |
@@ -2666,14 +2979,20 @@ and network models. A single camera at one junction provides none of those. The
 * "The spatial measurement **works**; its control benefit was **tested and not found**, because
   X also saturates at the edge of the view and ranks approaches like density does; the
   **green-time rule** is what reduces delay."
+* "In study 2 I **measure** the queue position that Mohajerpoor **estimates** with a model, and
+  use it as a storage limit inside Raza's controller."
+* "Near capacity it reduces spillback by **20–26%** against actuated control at the same delay;
+  **beyond capacity it fails**, because protection keeps cutting greens when every road is full."
+* "On a short road the camera measurement beats a stopped-vehicle count: that is where
+  measuring **where** the queue is pays off."
 
 > 💡 **In simple terms:** Exact wording for the claims that are easiest to get wrong in a viva.
 
 
 ---
 
-<a id="part-12"></a>
-# Part 12 — Viva Questions and Answers
+<a id="part-13"></a>
+# Part 13 — Viva Questions and Answers
 
 *Source: `docs/VIVA_QA.md`*
 
@@ -3061,8 +3380,8 @@ demand.
 
 ---
 
-<a id="part-13"></a>
-# Part 13 — Study Guide and Presentation Plan
+<a id="part-14"></a>
+# Part 14 — Study Guide and Presentation Plan
 
 *Source: `docs/STUDY_GUIDE.md`*
 
@@ -3230,9 +3549,38 @@ use X for timing rather than ranking.)
 
 > 💡 **In simple terms:** Learn the fair test and its four results.
 
+### Stage 6b — Study 2: storage-aware control (day 6)
+
+**Read:** `docs/EXPLAIN_TO_PROFESSOR.md` (all of it), `report/RESEARCH_PRESENTATION.md` §10
+C3, `sim/PROTOCOL_STUDY2.md`, `sim/study2.py` (the `Policy` class: `choose` and `should_end`).
+
+**Understand:**
+- Why study 1's lesson ("spatial information can only matter in timing, relative to each
+  road's own storage") leads to study 2's design.
+- The equation `score = D + λ(1/(α − S) − 1/α)`: compute it for S = 0, 0.5, 0.9 with λ = 1,
+  α = 1.1 (0, 0.76, 4.09). Why the reciprocal shape lets it act only near the end of the road.
+- The protection rule and the 20 s guard; why it cuts greens too often beyond capacity.
+- What each control tests: RAZA_A (is it just actuated timing?), PROP_B (does protection add
+  anything?), PROP_CNT (does the camera beat a count?).
+
+**Exercise:** run one heavy condition yourself and compare:
+```bash
+python -c "from sim.study2 import run, METHODS
+for m in ['ACT','PROP_B','PROP','PROP_CNT']:
+    r = run('short_minor_3000', METHODS[m], 201)
+    print(m, round(r['mean_delay'],1), round(r['blocked_seconds']))"
+```
+Then change `BETA` to 0.95 in a copy and predict the effect before running it.
+
+**Self-test:** Which parts are yours and which are Mohajerpoor's? (`EXPLAIN_TO_PROFESSOR.md` §2.)
+
 ### Stage 7 — Rehearse (day 7)
 
 **Read:** `docs/VIVA_QA.md`. Cover each answer, say it aloud, then compare.
+
+For the full 20-minute talk with the slide deck, use the plan in
+`docs/EXPLAIN_TO_PROFESSOR.md` §5. The short outline below is for a 10-minute version
+(add study 2 in the last three minutes).
 
 #### 10-minute presentation outline
 

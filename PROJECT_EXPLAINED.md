@@ -33,12 +33,23 @@ measurement of the queue improves it.
    * an audit showed the earlier "+21%" result was an artefact;
    * a fair closed-loop test in SUMO: 10 controllers × 9 traffic scenarios × 20 seeds =
      7,920 runs.
-7. **Result:**
+7. **Result of study 1:**
    * the measurement works;
-   * adding X/S does **not** measurably improve control (it changed the decision in 1 of
-     40 runs);
+   * adding X/S to the score does **not** measurably improve control (it changed the
+     decision in 1 of 40 runs);
    * the reason is explained;
    * the green-time rule (actuated timing) is what reduces delay.
+8. **Study 2, the final enhancement** (after Mohajerpoor et al., IEEE T-ITS 2023):
+   * use the camera-measured queue as a **storage limit** in the green timing, relative to
+     each road's own length: one extra term in Raza's score plus one rule that ends a green
+     when a waiting road is about to fill;
+   * tested against fixed-time, actuated, capacity-aware max pressure and Raza-style, on
+     junctions with equal and unequal road lengths, at five demand levels, 20 seeds;
+   * near capacity: **20–26% less spillback** than actuated control at the same delay; on a
+     short road the camera measurement beats a simple count;
+   * beyond capacity: it **fails** (delay about doubles), and the reason is known.
+
+**What is mine and what is borrowed** is set out in `docs/EXPLAIN_TO_PROFESSOR.md` §2.
 
 ---
 
@@ -174,6 +185,28 @@ one component at a time to see what each contributes.
 **Argmax** means "pick the option with the highest value": the approach with the highest
 score gets green.
 
+### Study 2 methods (`sim/study2.py`)
+
+| Method | What it is |
+|---|---|
+| **FT** | Fixed-time, 30 s each, round robin |
+| **ACT** | Actuated: round robin, skips empty roads, green 10–60 s, ends when the stop-line zone is empty for 2 s |
+| **CMP** | Capacity-aware max pressure (Gregoire et al. 2015): every 5 s, serve the road with the largest vehicles ÷ capacity |
+| **RAZA** | Raza-style density + 30/45/60 s bands |
+| **RAZA_A** | Raza-style density, actuated timing (ablation) |
+| **PROP_B** | + storage barrier on S in the score (ablation) |
+| **PROP** | **Proposed:** barrier + storage protection (after 20 s of green, end it if a waiting road has S ≥ 0.85) |
+| **PROP_CNT** | Control: PROP with S built from a stopped-vehicle count instead of the camera's queue tail |
+
+| Term | Meaning |
+|---|---|
+| **Storage** | The length of road an approach has for queueing (150 m or 60 m here) |
+| **Storage-aware / storage-blind** | Whether a measure accounts for how long each road is. Raza's count is storage-blind; S is a share of each road's own length |
+| **Storage barrier** | The term λ(1/(α − S) − 1/α): close to 0 for short queues, very large near the end of the road |
+| **Storage protection** | The timing rule that ends a green early to stop a waiting road from filling up |
+| **β (beta)** | The share of storage at which protection acts (0.85) |
+| **Guard** | Protection may act only after 20 s of green, so greens are not cut too short |
+
 ---
 
 ## Part 6 — The research papers and publishing terms
@@ -188,7 +221,11 @@ score gets green.
 | **Raza et al. 2025** | Base paper: edge YOLO + PCE density + Algorithm 1 (GDC, density argmax, 120/60/40 s bands); evaluated in SUMO and on real footage |
 | **Li et al. 2025 (T-ITS)** | Corridor signal coordination with queue-profile estimation; minimises over-saturation and stops |
 | **Wei et al. 2025 (T-ITS)** | Hierarchical predictive control of a network with queue dynamics; prevents spillback |
-| **Mohajerpoor, Cai & Ramezani 2023 (T-ITS)** | Single over-saturated junction; uses *predicted* demand and spillback probability to set *timing*; supports this project's finding |
+| **Mohajerpoor, Cai & Ramezani 2023 (T-ITS)** | Single over-saturated junction. FASC algorithm: sets cycle lengths and splits from *predicted* demand, a shockwave queue model, a spillback constraint (queue ≤ β × link length) and a penalty that grows near the end of the link. Source of study 2's storage term and rule |
+| **FASC** | Mohajerpoor's algorithm name (from the paper): optimal signal control of an isolated over-saturated junction |
+| **Shockwave / kinematic-wave model** | A traffic-flow model of how the back of a queue moves; Mohajerpoor uses it to *estimate* queue position. This project *measures* it instead |
+| **Queue formation (QF) / queue discharging (QD)** | Mohajerpoor's two over-saturated regimes: demand above capacity (queues grow) and afterwards (queues clear). Study 2 fails in the QF-like regime |
+| **Max pressure / capacity-aware max pressure** | Varaiya 2013 / Gregoire et al. 2015: serve the road with the largest queue pressure; the capacity-aware version divides by road capacity |
 | **Zhu et al. 2024/25 (T-ITS)** | Queue length from *sparse* vehicle trajectories; relevant to missed far-away detections |
 | **"et al."** | "and others" (co-authors) |
 | **Edge computing / edge node** | Running the AI on a small device next to the road instead of in the cloud |
@@ -242,7 +279,10 @@ and network models. A single camera at one junction provides none of those. The
 | **t-interval** | A CI computed with the Student-t distribution (for small samples like 20 seeds) | Method used |
 | **Statistical significance** | The CI excludes 0 | Only one marginal cell, consistent with chance |
 | **Multiple comparisons** | Testing many things means some look significant by luck (~1 in 20 at 95%) | Why one marginal cell is not reported as an effect |
-| **Validation vs test seeds** | Seeds 0–3 for design decisions; seeds 100–119 for the reported results | Prevents tuning to the results |
+| **Validation vs test seeds** | Study 1: seeds 0–3 for design, 100–119 reported. Study 2: seeds 0–9 for design, 200–219 reported | Prevents tuning to the results |
+| **Selection rule** | A rule, written before seeing results, for choosing among design variants | Study 2's guard was chosen this way (`sim/PROTOCOL_STUDY2.md`) |
+| **Demand level** | Total vehicles per hour arriving at the junction (1200–3600 in study 2) | The graded condition, like noise density in a super-resolution table |
+| **Under / near / beyond capacity** | Demand well below, close to, or above what the junction can serve | The proposed method helps near capacity and fails beyond it |
 | **Pre-registration / frozen protocol** | Writing the experiment plan down and committing it *before* running the test | `sim/PROTOCOL.md`; the git history proves the order |
 | **Warm-up** | The first 300 s, excluded so the junction starts filled | Standard simulation practice |
 | **Confound** | A hidden second change that could explain a result | S3 → S4 also changed the base weight 0.7 → 0.4 |
@@ -297,7 +337,10 @@ and network models. A single camera at one junction provides none of those. The
 | `docs/STUDY_GUIDE.md` | A 7-day plan to learn the project, exercises, a 10-minute talk outline and a demo checklist |
 | `AUDIT_REPORT.md` | What was wrong in the earlier results (W1–W7), the evidence, and how each was fixed |
 | `docs/architecture.md` | System diagram and module map |
+| `docs/EXPLAIN_TO_PROFESSOR.md` | **Start here before the presentation:** the story, what is mine vs borrowed, numbers, 20-minute talk plan, hard questions |
+| `report/RESEARCH_PRESENTATION.md` | The project in the department's presentation format, with all result tables |
 | `sim/PROTOCOL.md` | The closed-loop experiment plan, frozen before the test runs |
+| `sim/PROTOCOL_STUDY2.md` | Study 2's plan, validation history and selection rule |
 | `docs/research/` | Literature review, limitation analysis of the papers, additional T-ITS papers |
 | `docs/papers/` | The PDFs of Raza, Li and Wei, plus verified facts about Raza |
 | `docs/archive/` | Old documents whose results are superseded, kept for the record |
@@ -321,3 +364,9 @@ and network models. A single camera at one junction provides none of those. The
 * "The spatial measurement **works**; its control benefit was **tested and not found**, because
   X also saturates at the edge of the view and ranks approaches like density does; the
   **green-time rule** is what reduces delay."
+* "In study 2 I **measure** the queue position that Mohajerpoor **estimates** with a model, and
+  use it as a storage limit inside Raza's controller."
+* "Near capacity it reduces spillback by **20–26%** against actuated control at the same delay;
+  **beyond capacity it fails**, because protection keeps cutting greens when every road is full."
+* "On a short road the camera measurement beats a stopped-vehicle count: that is where
+  measuring **where** the queue is pays off."

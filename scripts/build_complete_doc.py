@@ -16,6 +16,7 @@ OUT = Path("COMPLETE_PROJECT_DOCUMENT.md")
 # (title of the part in the combined document, source file, what to keep)
 PARTS = [
     ("Overview", "README.md", "from:## The result in five points"),
+    ("Explaining the Project to the Professor", "docs/EXPLAIN_TO_PROFESSOR.md", "all"),
     ("Research Presentation (department format)", "report/RESEARCH_PRESENTATION.md", "all"),
     ("Final Report", "report/FINAL_REPORT.md", "all"),
     ("System Architecture", "docs/architecture.md", "all"),
@@ -39,6 +40,14 @@ SIMPLE: dict[tuple[str, str], str] = {
         "delay was ending each green once its queue has cleared. Used instead to protect each "
         "road's storage, the measurement cut spillback by about a fifth near capacity, but "
         "made things worse when traffic exceeded capacity.",
+    # ---------------- EXPLAIN TO PROFESSOR ----------------
+    ("docs/EXPLAIN_TO_PROFESSOR.md", "2. What is mine, and what is borrowed"):
+        "The tools (YOLO, ByteTrack), the base controller (Raza) and the shape of the storage "
+        "formula (Mohajerpoor) are borrowed and cited. Measuring where the queue ends from "
+        "video, building it into a real-time controller, and all the experiments are yours.",
+    ("docs/EXPLAIN_TO_PROFESSOR.md", "5. Twenty-minute talk, slide by slide"):
+        "About one minute per slide for the background, most time on the method and the "
+        "results tables, and finish with what is yours and what comes next.",
     # ---------------- RESEARCH PRESENTATION ----------------
     ("report/RESEARCH_PRESENTATION.md", "4. Problem formulation"):
         "The camera estimates where each queue ends; the controller must choose who goes next "
@@ -431,7 +440,7 @@ def main() -> None:
         "> is ending each green once its queue has cleared. In a second test (study 2), using",
         "> the measurement to protect each road's storage, as Mohajerpoor et al. (2023) do with a",
         "> model, cut spillback by about a fifth near capacity at no extra waiting, but failed",
-        "> beyond capacity.",
+        "> beyond capacity. Start with Part 2: how to explain all of this to the professor.",
         "",
     ]
     OUT.write_text("\n".join(header + toc) + "\n" + "".join(sections), encoding="utf-8")

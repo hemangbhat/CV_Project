@@ -155,9 +155,38 @@ Optionally watch it on a machine with a display: `$(python -c "import sumo,os;pr
 **Self-test:** What would you have to change for S to matter? (Downstream visibility, or
 use X for timing rather than ranking.)
 
+## Stage 6b — Study 2: storage-aware control (day 6)
+
+**Read:** `docs/EXPLAIN_TO_PROFESSOR.md` (all of it), `report/RESEARCH_PRESENTATION.md` §10
+C3, `sim/PROTOCOL_STUDY2.md`, `sim/study2.py` (the `Policy` class: `choose` and `should_end`).
+
+**Understand:**
+- Why study 1's lesson ("spatial information can only matter in timing, relative to each
+  road's own storage") leads to study 2's design.
+- The equation `score = D + λ(1/(α − S) − 1/α)`: compute it for S = 0, 0.5, 0.9 with λ = 1,
+  α = 1.1 (0, 0.76, 4.09). Why the reciprocal shape lets it act only near the end of the road.
+- The protection rule and the 20 s guard; why it cuts greens too often beyond capacity.
+- What each control tests: RAZA_A (is it just actuated timing?), PROP_B (does protection add
+  anything?), PROP_CNT (does the camera beat a count?).
+
+**Exercise:** run one heavy condition yourself and compare:
+```bash
+python -c "from sim.study2 import run, METHODS
+for m in ['ACT','PROP_B','PROP','PROP_CNT']:
+    r = run('short_minor_3000', METHODS[m], 201)
+    print(m, round(r['mean_delay'],1), round(r['blocked_seconds']))"
+```
+Then change `BETA` to 0.95 in a copy and predict the effect before running it.
+
+**Self-test:** Which parts are yours and which are Mohajerpoor's? (`EXPLAIN_TO_PROFESSOR.md` §2.)
+
 ## Stage 7 — Rehearse (day 7)
 
 **Read:** `docs/VIVA_QA.md`. Cover each answer, say it aloud, then compare.
+
+For the full 20-minute talk with the slide deck, use the plan in
+`docs/EXPLAIN_TO_PROFESSOR.md` §5. The short outline below is for a 10-minute version
+(add study 2 in the last three minutes).
 
 ### 10-minute presentation outline
 

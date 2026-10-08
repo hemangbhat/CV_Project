@@ -386,6 +386,15 @@ method serve in short, queue-driven greens. On this particular seed the proposed
 slightly worse than actuated; across the 20 seeds it has 20% less spillback at the same
 delay (Table 3).
 
+**What is borrowed and what is this project's own**
+
+| Borrowed | Own |
+|---|---|
+| YOLOv8, ByteTrack | Queue axis, perspective-normalised stopped test, contiguous queue tail X and risk S (C1) |
+| Raza's PCE density score and starvation guard | Measuring the queue position instead of modelling it |
+| Mohajerpoor's storage constraint and reciprocal penalty (their shape) | Turning their optimisation into an online rule inside Raza's controller; the 20 s guard; the passage-time fix |
+| Max pressure, actuated control (baselines) | Both studies, the count-based control, the camera-noise test, the pre-registered protocols |
+
 **Contributions**
 * A storage-aware extension of a vision controller that is a one-term change to the base
   equation (Eq. 9) plus one timing rule (Eq. 10), both taken from Mohajerpoor et al.'s

@@ -444,3 +444,48 @@ python -m sim.experiment table --results results/sim/test_exact.jsonl
 python -m sim.figures
 python -m sim.decision_analysis
 ```
+
+## 20. Study 2: storage-aware score and storage protection
+
+**Code:** `sim/study2.py` (methods, `Policy`, `run`), `sim/study2_figures.py` (tables and
+figures), `tests/test_study2.py`. **Protocol:** `sim/PROTOCOL_STUDY2.md`.
+
+**Junctions.** `sim/scenario.py: build_network(lengths=...)` builds the junction with a
+length per approach: `uniform` (all 150 m) or `short_minor` (East/West 60 m). The virtual
+camera's ROI is each approach's whole length, so X and S are shares of *that* road.
+
+**Demand.** Total 1200–3600 veh/h, split N 35% / S 30% / E 20% / W 15%, Poisson, 5% heavy
+vehicles, 1800 s with 300 s warm-up.
+
+**The proposed decision** (`Policy.choose`, select = "prop"):
+```
+score_i = D_i + λ (1/(α − S_i) − 1/α)       λ = 1, α = 1.1, S capped at 1
+```
+`D_i` uses one common normaliser (jam capacity of 150 m), so it is Raza's storage-blind
+count. The starvation guard of the Raza-style controller is kept (an approach with traffic
+may be passed over at most 3 times). Worked example: D = 0.5, S = 0.4 → 0.5 + 0.52 = 1.02;
+D = 0.3, S = 0.95 → 0.3 + 5.76 = 6.06, so the nearly full short road wins.
+
+**The proposed timing** (`Policy.should_end`):
+1. end at 60 s (max green);
+2. actuated gap-out: after 10 s, end when the stop-line zone (20 m) has been empty for 2 s;
+3. protection: after 20 s, end if some waiting road j has `S_j ≥ 0.85` and `S_j > S_active`.
+
+**Baselines.** FT: round robin, 30 s. ACT: round robin skipping empty roads, timing 1–2.
+CMP: after 10 s, every 5 s, end if another road has a higher `PCE count / jam capacity`;
+the next green goes to the highest such ratio. RAZA: `AdaptiveController` with the S1
+config and 30/45/60 s bands. RAZA_A, PROP_B: ablations. PROP_CNT: as PROP, but
+`S` is built from `stopped vehicles / jam capacity` instead of the measured tail.
+
+**Measures.** Mean delay (time loss + insertion delay); blocked-entry seconds (arrivals
+that cannot enter because the queue reaches the upstream end); paired 95% t-intervals
+over test seeds 200–219.
+
+**Reproduce:**
+```bash
+python -m sim.study2 run --seeds 200-219 --out results/sim/study2/test_exact.jsonl
+python -m sim.study2 run --seeds 200-219 --methods PROP --noise vision --out results/sim/study2/test_vision.jsonl
+python -m sim.study2_figures        # tables.md, summary.json, report/figures/study2/
+```
+Results and their interpretation: `report/RESEARCH_PRESENTATION.md` §10 C3.
+
