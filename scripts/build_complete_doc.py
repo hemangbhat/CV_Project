@@ -16,6 +16,7 @@ OUT = Path("COMPLETE_PROJECT_DOCUMENT.md")
 # (title of the part in the combined document, source file, what to keep)
 PARTS = [
     ("Overview", "README.md", "from:## The result in five points"),
+    ("Documentation Index", "docs/README.md", "all"),
     ("Explaining the Project to the Professor", "docs/EXPLAIN_TO_PROFESSOR.md", "all"),
     ("Research Presentation (department format)", "report/RESEARCH_PRESENTATION.md", "all"),
     ("Final Report", "report/FINAL_REPORT.md", "all"),
@@ -24,6 +25,7 @@ PARTS = [
     ("Audit Report", "AUDIT_REPORT.md", "all"),
     ("Closed-Loop Experiment Protocol", "sim/PROTOCOL.md", "all"),
     ("Study 2 Protocol (storage-aware control)", "sim/PROTOCOL_STUDY2.md", "all"),
+    ("Limitation Analysis of the Papers", "docs/research/paper_limitations_analysis.md", "all"),
     ("The Papers (verified facts)", "docs/papers/README.md", "all"),
     ("Additional Recent T-ITS Papers", "docs/research/additional_tits_papers.md", "all"),
     ("Glossary of Concepts and Terms", "PROJECT_EXPLAINED.md", "from:## Part 2 — Traffic-engineering terms"),

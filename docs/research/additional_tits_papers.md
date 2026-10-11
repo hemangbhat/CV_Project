@@ -22,9 +22,11 @@ vol. 24, no. 1, pp. 815–826, 2023.
   place our results point to: it uses prediction to set **timing** (cycle length and splits),
   whereas we used it to **rank** approaches. Our decision analysis found that ranking almost
   never changes (S changed 1 of 40 runs), while timing dominated delay.
-* **How to use it:** cite it in the discussion and future work as evidence that
-  "prediction + spillback should enter the green-time decision, not the selection
-  score". It also gives a fourth baseline idea: capacity-aware max pressure.
+* **How it was used (study 2):** this paper became the basis of the final enhancement.
+  Its spillback constraint and reciprocal penalty were adapted into an online rule driven
+  by the camera's measured queue, and capacity-aware max pressure was added as a baseline.
+  Analysis: `docs/research/paper_limitations_analysis.md` §7; results:
+  `report/RESEARCH_PRESENTATION.md` §10 C3.
 
 ## 2. Zhu et al. (T-ITS, 2024/2025) — queue length from sparse vehicle trajectories
 

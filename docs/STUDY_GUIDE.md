@@ -21,7 +21,10 @@ able to say without notes, and a self-test. Allow about a week.
 > and project it forward. A count inside a fixed stop-line strip saturates, so forecasting
 > the count is blind to growth. Measuring how far the stopped chain reaches back is not.
 > I built that measurement, fixed it until it was correct, and tested whether it improves
-> control in a closed-loop simulation. It does not: here is why.
+> control in a closed-loop simulation. Used in the ranking score it does not, and I can
+> say why. Following Mohajerpoor (T-ITS 2023), I then used it as a storage limit in the
+> green timing: near capacity it cuts spillback by 20–26% against actuated control at the
+> same delay, and beyond capacity it fails.
 
 **Self-test:** What exactly is Raza's limitation, in one sentence? What did you take from
 Li, and what from Wei? What did you *not* take, and why?
@@ -200,7 +203,7 @@ For the full 20-minute talk with the slide deck, use the plan in
 | 5–6 | **Live demo** | demo video: boxes, IDs, queue axes, red tail bar, D Q X S F panel |
 | 6–7 | Audit | open-loop throughput is invalid; NULL reproduces +21%; geometry fixed |
 | 7–9 | Closed loop | protocol; `fig_timing_vs_score.png`; `fig_paired_actuated_saturating.png`; 1 of 40 decisions |
-| 9–10 | Conclusion | measurement works; control benefit tested and not found, with the reason; timing matters; future work |
+| 9–10 | Conclusion | measurement works; useless in the ranking (study 1), useful as a storage limit near capacity (study 2), fails beyond capacity; future work |
 
 ### Live-demo checklist
 

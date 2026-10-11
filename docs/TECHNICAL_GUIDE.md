@@ -26,6 +26,7 @@ Contents
 17. [Statistics: how a difference is judged real](#17-statistics-how-a-difference-is-judged-real)
 18. [Testing](#18-testing)
 19. [Reproducing every number](#19-reproducing-every-number)
+20. [Study 2: storage-aware score and storage protection](#20-study-2-storage-aware-score-and-storage-protection)
 
 ---
 
@@ -446,6 +447,11 @@ python -m sim.decision_analysis
 ```
 
 ## 20. Study 2: storage-aware score and storage protection
+
+**Source idea:** Mohajerpoor et al., IEEE T-ITS 2023: a spillback constraint
+`x ≤ β·link length` and a penalty that grows as a queue nears the end of its link. They
+estimate the queue position with a shockwave model; here the camera measures it, and the
+idea runs as a per-step rule inside the Raza-style controller instead of a cycle optimiser.
 
 **Code:** `sim/study2.py` (methods, `Policy`, `run`), `sim/study2_figures.py` (tables and
 figures), `tests/test_study2.py`. **Protocol:** `sim/PROTOCOL_STUDY2.md`.

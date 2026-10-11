@@ -1,4 +1,6 @@
 > **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
+>
+> **Final enhancement (study 2):** the project's final enhancement builds on a third T-ITS paper, Mohajerpoor et al. 2023, summarised with its limitations in `docs/research/paper_limitations_analysis.md` §7. Its results are in `report/RESEARCH_PRESENTATION.md` §10 C3; how to explain them is in `docs/EXPLAIN_TO_PROFESSOR.md`.
 
 # Limitation Analysis of the Two Selected IEEE TITS Papers, and What This Project Takes From Them
 
@@ -28,7 +30,7 @@ Both are IEEE Transactions on Intelligent Transportation Systems, 2025.
 A third paper is referenced throughout but is *not* one of the two selected:
 **Raza et al., IEEE Access vol. 13, 2025, DOI 10.1109/ACCESS.2025.3602844** — the
 edge-deployed YOLO + PCE density paper. That is this project's existing *base*
-paper, already positioned in `report/literature_review.md` §2.1. It is kept here
+paper, already positioned in `docs/research/literature_review.md` §2.1. It is kept here
 only where it supplies something one of the TITS papers is missing.
 
 **What unites the two selected papers.** Both are model-based, optimisation-driven
@@ -339,7 +341,7 @@ a design principle taken from the paper, not just a limitation catalogued about 
 ## 5. Measured outcomes
 
 Full tables, per-approach breakdowns, phase sequences, and `run_id`s are in
-`report/results_summary.md`. Ablation on `bellevue_116th_busy.mp4` at `α = 0.50`.
+`docs/archive/results_summary.md`. Ablation on `bellevue_116th_busy.mp4` at `α = 0.50`.
 
 ### 5.1 The Wei-derived mechanisms (E1–E4)
 
@@ -403,7 +405,7 @@ al. criticise (§4.4).
 
 ### 5.2 The Li-derived mechanisms (E5–E7)
 
-Measured results are recorded in `report/results_summary.md` once the runs complete;
+Measured results are recorded in `docs/archive/results_summary.md` once the runs complete;
 this section states what each run is for, so the numbers cannot be chosen after the
 fact.
 
@@ -442,3 +444,58 @@ On the measured evidence so far: **E4 transfers well, E2 helps alone but conflic
 with E4, E1 is correct but inert on this fleet, and E3 as first built does not
 transfer at this spatial scale.** Two of those five outcomes are negative and are
 reported as such. Nothing was re-tuned to improve a number after the fact.
+
+---
+
+## 7. Paper C — Mohajerpoor, Cai & Ramezani 2023 (IEEE T-ITS), the basis of study 2
+
+R. Mohajerpoor, C. Cai, M. Ramezani, "Optimal Traffic Signal Control of Isolated
+Oversaturated Intersections Using Predicted Demand," *IEEE T-ITS* 24(1), 815–826, 2023,
+doi:10.1109/TITS.2022.3209606. Facts below were checked against the PDF.
+
+### 7.1 What it does
+* The FASC algorithm controls a **single, isolated, over-saturated junction**. It chooses
+  dynamic cycle lengths and phase splits for the whole congested period.
+* Queue position along each link comes from a **shockwave (kinematic-wave) model** driven by
+  *predicted* arrival flows; loop detectors give feedback. The authors note that queuing
+  theory is inaccurate for *spatial* queue lengths, which is why they model them.
+* A **spillback-avoidance constraint** `x_p(k) ≤ β_p Λ_p` (Eq. 9) keeps each queue within a
+  multiple of its link length Λ; β = 1 protects a movement fully, β > 1 relaxes it (they use
+  β = 1 for the major road and 5 for the minor road).
+* In the queue-formation period the objective mixes total delay with a **spillback
+  penalty** that grows like `Λ_p / (α_p Λ_p − δ_p(k))` as a queue nears the end of its link
+  (Eq. 17).
+* Two regimes: **queue formation (QF)**, demand above capacity, and **queue discharging (QD)**.
+* Aimsun experiment on one Sydney junction, 5 replications: 63% / 55% / 40% less delay than
+  optimal fixed-time, actuated and capacity-aware max pressure (5 s decisions).
+
+### 7.2 Limitations the authors state
+* Spillback is often **unavoidable** in the QF period; the constraint must then be relaxed
+  (Remark 3) and can conflict with the under-saturation constraint on short links (Remark 4).
+* Demand prediction and the end of the QD period must be estimated; they add an iterative
+  Adaptive Flow Updating step for this.
+
+### 7.3 Limitations that follow from the method
+* The queue position is **estimated, not measured**: its accuracy depends on the demand
+  prediction and the traffic model.
+* It needs a **non-convex optimisation** (spatial branch-and-bound or SQP) and a forecast of
+  the whole congested period.
+* One junction, two phases, five replications.
+
+### 7.4 What this project takes, and what it does with each limitation
+
+| Limitation | Decision | Where |
+|---|---|---|
+| Queue position estimated from a model | **Applied:** measured directly from video (queue tail X, risk S) | C1, `src/traffic_metrics.py`, `sim/sensor.py` |
+| Needs a cycle optimiser and demand forecast | **Applied:** replaced by an online rule inside Raza's controller (barrier term + storage protection) | `sim/study2.py` |
+| Spillback unavoidable in QF | **Tested:** the online rule fails beyond capacity (delay about doubles); a 20 s guard reduced but did not remove it. Regime switch left as future work | `sim/PROTOCOL_STUDY2.md`, Tables 2–3 |
+| One junction, five replications | **Partly applied:** two geometries, five demand levels, 20 paired seeds; still one junction | study 2 |
+| Capacity-aware max pressure as a baseline | **Applied** (5 s decisions, as in the paper) | `CMP` in `sim/study2.py` |
+
+### 7.5 Measured outcome (study 2, test seeds 200–219)
+* Near capacity (3000 veh/h): 20–26% less local spillback than actuated control, delay
+  unchanged; on the 60 m side-street junction the camera's measured queue beats a
+  stopped-vehicle count (−115 s blocked entry).
+* Beyond capacity (3600 veh/h): delay +81 to +91 s against actuated; the QF regime the
+  paper warns about.
+* Full tables: `results/sim/study2/tables.md`.

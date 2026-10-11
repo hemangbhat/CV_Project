@@ -77,3 +77,23 @@ records that frame as `selection_score_frame`.
 | Virtual camera | `sim/sensor.py` | same definitions as the video measurements |
 | Closed-loop runner, ablation arms | `sim/closed_loop.py` | |
 | Experiment grid and statistics | `sim/experiment.py`, `sim/PROTOCOL.md` | paired 95% CIs over 20 seeds |
+| Study 2: storage-aware methods and runner | `sim/study2.py`, `sim/PROTOCOL_STUDY2.md` | 8 methods, 2 geometries × 5 demand levels, own signal loop |
+| Study 2 tables and figures | `sim/study2_figures.py` | `results/sim/study2/`, `report/figures/study2/` |
+| Presentation diagrams | `scripts/make_presentation_figures.py` | taxonomy, workflow, method flow |
+| Combined document | `scripts/build_complete_doc.py` | builds `COMPLETE_PROJECT_DOCUMENT.md` |
+
+## Study 2 path
+
+Study 2 (`sim/study2.py`) uses the same virtual camera (`sim/sensor.py`) and the same
+`QueuePredictor` to compute S, but runs its own small signal loop so every method shares
+identical mechanics (3 s yellow, 10–60 s greens) and only the selection and timing rules
+differ:
+
+```
+SUMO step -> virtual camera per approach (ROI = that road's own length)
+          -> QueuePredictor (S = X projected 5 s)
+          -> Policy.choose   (which road next: round robin / max pressure / Raza / proposed)
+          -> Policy.should_end (when to end the green: fixed / bands / actuated / protection)
+```
+The proposed rule: `score = D + λ(1/(α − S) − 1/α)`; end the green after 20 s if a waiting
+road has `S ≥ 0.85` and more than the active one.

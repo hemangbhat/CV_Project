@@ -1,4 +1,6 @@
 > **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
+>
+> **Final enhancement (study 2):** the project's final enhancement builds on a third T-ITS paper, Mohajerpoor et al. 2023, summarised with its limitations in `docs/research/paper_limitations_analysis.md` §7. Its results are in `report/RESEARCH_PRESENTATION.md` §10 C3; how to explain them is in `docs/EXPLAIN_TO_PROFESSOR.md`.
 
 # Literature Review and Positioning
 
@@ -162,7 +164,7 @@ Raza 2025), both out of scope.
 ## 5. Measured results
 
 All figures are aggregates over the four approaches, derived from the run logs
-(`results/run_logs/`) and tagged with their `run_id` in `report/results_summary.md`.
+(`results/run_logs/`) and tagged with their `run_id` in `docs/archive/results_summary.md`.
 Footage: Bellevue 116th Ave NE / NE 12th St, 1280×720, 30 fps.
 
 ### 5.1 Adaptive vs fixed-time
@@ -292,7 +294,7 @@ same core point: **queue length must be estimated as a variable, not fixed or
 inferred as an afterthought.** That is the axis this project's controller was
 weakest on, so it is the axis the transferred mechanisms address. The full
 limitation catalogue and the applied/out-of-scope decisions are in
-`report/paper_limitations_analysis.md`; this section records what was built and
+`docs/research/paper_limitations_analysis.md`; this section records what was built and
 what it measured. Every mechanism is configuration-gated and off by default, so
 Sections 5 and 6 remain valid.
 
@@ -333,8 +335,8 @@ Four mechanisms were transferred from it, reduced to a single junction, and driv
 from the existing vision measurement. Each is configuration-gated and off by
 default, so every result in Sections 5 and 6 above remains valid. Full derivation,
 the limitation each one answers, and what was deliberately left out are in
-**`report/paper_limitations_analysis.md`**; measured tables are in
-`report/results_summary.md`.
+**`docs/research/paper_limitations_analysis.md`**; measured tables are in
+`docs/archive/results_summary.md`.
 
 | | Mechanism | Wei et al. source | Measured effect on the busy clip |
 |---|---|---|---|
@@ -474,7 +476,7 @@ the queue itself, projected forward. The two are independent convex terms (γ an
 and can be combined.
 
 **Measured result (busy clip).** Full table and `run_id`s in
-`report/results_summary.md`. The forecast is genuinely anticipatory: it reached the
+`docs/archive/results_summary.md`. The forecast is genuinely anticipatory: it reached the
 maximum forecast of 1.0 and, in **~19% of frame-approach cells, projected a queue
 higher than the one currently measured** — so in nearly a fifth of the run it acted
 on growth that had not yet arrived. Placed in the score (weight 0.4) on the band

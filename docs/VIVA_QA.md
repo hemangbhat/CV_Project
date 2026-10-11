@@ -1,7 +1,9 @@
 # Viva preparation — questions and exact answers
 
 Each answer is short enough to say aloud and points to where the evidence is. Numbers
-match `report/FINAL_REPORT.md`. If you are asked something not listed here, the two
+match `report/FINAL_REPORT.md`. Sections A–D cover the measurement and study 1; section E
+covers study 2, the final enhancement. For the overall story and what is yours, read
+`docs/EXPLAIN_TO_PROFESSOR.md` first. If you are asked something not listed here, the two
 documents to know cold are `docs/TECHNICAL_GUIDE.md` (how it works) and
 `AUDIT_REPORT.md` (what went wrong and how it was found).
 
@@ -248,8 +250,10 @@ movements from longer footage.
 The assignment asks me to *experimentally prove whether* the enhancement helps. I built
 the enhancement, found and fixed three measurement problems, discovered that the original
 headline was an artefact, designed a fair test (null control, common timing,
-pre-registered protocol, paired statistics), and explained *why* it does not help. A
-claimed win built on the invalid metric would have been the weaker project.
+pre-registered protocol, paired statistics), and explained *why* it does not help in the
+score. That explanation designed study 2, which does help near capacity (20–26% less
+spillback than actuated control at the same delay) and fails beyond it. A claimed win
+built on the invalid metric would have been the weaker project.
 
 **"How do I know the simulation tests *your* controller and not a re-implementation?"**
 `sim/closed_loop.py` imports `AdaptiveController`, `PhaseSequencer`, `QueuePredictor`
