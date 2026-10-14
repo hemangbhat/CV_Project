@@ -28,19 +28,20 @@ files in the repository.
 1. [Overview](#part-1) — from `README.md`
 2. [Documentation Index](#part-2) — from `docs/README.md`
 3. [Explaining the Project to the Professor](#part-3) — from `docs/EXPLAIN_TO_PROFESSOR.md`
-4. [Research Presentation (department format)](#part-4) — from `report/RESEARCH_PRESENTATION.md`
-5. [Final Report](#part-5) — from `report/FINAL_REPORT.md`
-6. [System Architecture](#part-6) — from `docs/architecture.md`
-7. [Technical Guide](#part-7) — from `docs/TECHNICAL_GUIDE.md`
-8. [Audit Report](#part-8) — from `AUDIT_REPORT.md`
-9. [Closed-Loop Experiment Protocol](#part-9) — from `sim/PROTOCOL.md`
-10. [Study 2 Protocol (storage-aware control)](#part-10) — from `sim/PROTOCOL_STUDY2.md`
-11. [Limitation Analysis of the Papers](#part-11) — from `docs/research/paper_limitations_analysis.md`
-12. [The Papers (verified facts)](#part-12) — from `docs/papers/README.md`
-13. [Additional Recent T-ITS Papers](#part-13) — from `docs/research/additional_tits_papers.md`
-14. [Glossary of Concepts and Terms](#part-14) — from `PROJECT_EXPLAINED.md`
-15. [Viva Questions and Answers](#part-15) — from `docs/VIVA_QA.md`
-16. [Study Guide and Presentation Plan](#part-16) — from `docs/STUDY_GUIDE.md`
+4. [Worked Example: One Frame Through Every Formula](#part-4) — from `docs/WORKED_EXAMPLE.md`
+5. [Research Presentation (department format)](#part-5) — from `report/RESEARCH_PRESENTATION.md`
+6. [Final Report](#part-6) — from `report/FINAL_REPORT.md`
+7. [System Architecture](#part-7) — from `docs/architecture.md`
+8. [Technical Guide](#part-8) — from `docs/TECHNICAL_GUIDE.md`
+9. [Audit Report](#part-9) — from `AUDIT_REPORT.md`
+10. [Closed-Loop Experiment Protocol](#part-10) — from `sim/PROTOCOL.md`
+11. [Study 2 Protocol (storage-aware control)](#part-11) — from `sim/PROTOCOL_STUDY2.md`
+12. [Limitation Analysis of the Papers](#part-12) — from `docs/research/paper_limitations_analysis.md`
+13. [The Papers (verified facts)](#part-13) — from `docs/papers/README.md`
+14. [Additional Recent T-ITS Papers](#part-14) — from `docs/research/additional_tits_papers.md`
+15. [Glossary of Concepts and Terms](#part-15) — from `PROJECT_EXPLAINED.md`
+16. [Viva Questions and Answers](#part-16) — from `docs/VIVA_QA.md`
+17. [Study Guide and Presentation Plan](#part-17) — from `docs/STUDY_GUIDE.md`
 
 ---
 
@@ -199,6 +200,7 @@ Everything needed to understand, reproduce and present the project. Read in this
 | # | Document | Read it to |
 |---|---|---|
 | 1 | [`EXPLAIN_TO_PROFESSOR.md`](EXPLAIN_TO_PROFESSOR.md) | Know the story, what is yours vs borrowed, the key numbers, the 20-minute talk and hard questions |
+| 1b | [`WORKED_EXAMPLE.md`](WORKED_EXAMPLE.md) | Follow one real camera frame through every formula: box → position p → stopped → X → S → score, with every number computed by hand (`python audit/explain_frame.py`) |
 | 2 | [`../report/RESEARCH_PRESENTATION.md`](../report/RESEARCH_PRESENTATION.md) | See the whole project in the department's presentation format, with every result table |
 | 3 | [`../PROJECT_EXPLAINED.md`](../PROJECT_EXPLAINED.md) | Look up any term or abbreviation (SUMO, PCE, FASC, CI, β, ...) |
 | 4 | [`TECHNICAL_GUIDE.md`](TECHNICAL_GUIDE.md) | Understand each stage: formulas, code locations, worked examples (§20 = study 2) |
@@ -457,7 +459,252 @@ More questions with full answers: `docs/VIVA_QA.md` (sections A–E).
 ---
 
 <a id="part-4"></a>
-# Part 4 — Research Presentation (department format)
+# Part 4 — Worked Example: One Frame Through Every Formula
+
+*Source: `docs/WORKED_EXAMPLE.md`*
+
+Every number below comes from a real frame of the busy Bellevue clip (frame 2036,
+t = 67.87 s, West approach), produced by the project's own code. Reproduce it, or do
+the same on any other frame or approach:
+
+```bash
+python audit/explain_frame.py --frame 2036 --approach West      # this example
+python audit/explain_frame.py --find --approach South           # finds another frame with a queue
+```
+The picture is saved to `report/explain_frame.png`: green boxes = stopped, grey =
+moving, red dot = reference point, white line = queue axis, orange = stop-line strip,
+red bar = measured queue tail X.
+
+![frame 2036](../report/explain_frame.png)
+
+---
+
+### Step 0. What comes in from YOLO + ByteTrack
+
+For each vehicle, every frame:
+
+| Symbol | Meaning | Example (car #3) |
+|---|---|---|
+| `(x1, y1, x2, y2)` | Bounding box corners in pixels (top-left, bottom-right) | (227, 467, 374, 559) |
+| `class` | car / truck / bus / motorcycle | car |
+| `id` | ByteTrack's identity, the same for this car in every frame | 503 |
+
+The **reference point** is the bottom-centre of the box, `((x1+x2)/2, y2)`: where the
+wheels touch the road. For car #3: ((227+374)/2, 559) = **(300, 559)**. We use the
+bottom, not the centre, because the bottom is on the road surface; the centre of a tall
+truck floats above it.
+
+The box **height** `h = y2 − y1` = 559 − 467 = **92 px**; width `w = x2 − x1` = 147 px.
+
+---
+
+### Step 1. The queue axis (drawn once per camera)
+
+In `config/bellevue_116th_v2.json` the West approach has
+`queue_axis: [[365, 530], [0, 640]]`: a line from the stop line (365, 530) back along
+the road to the edge of the image (0, 640).
+
+| Symbol | Meaning | Value |
+|---|---|---|
+| `A` | First point of the axis = the stop line | (365, 530) |
+| `L_axis` | Total length of the axis in pixels | √(365² + 110²) = **381.2 px** |
+| `u` | Unit vector along the axis, pointing upstream | (−365, 110) / 381.2 = (−0.957, 0.289) |
+
+**Position of a car on the axis.** Project its reference point onto the line and measure
+how far along it is:
+
+```
+t = (ref − A) · u                 (the dot product: how far along the line, in pixels)
+p = t / L_axis                    (as a fraction: 0 = stop line, 1 = far end)
+```
+
+**Car #3, by hand:** ref − A = (300 − 365, 559 − 530) = (−65, 29).
+t = (−65)(−0.957) + (29)(0.289) = 62.2 + 8.4 = 70.6 px → p = 70.6 / 381.2 = **0.185**. ✓
+
+**Car #2, by hand:** ref = (133, 513); ref − A = (−232, −17).
+t = 222.0 − 4.9 = 217.1 px → p = 217.1 / 381.2 = **0.570**. ✓
+
+So "p = 0.57" literally means: *this car is 57% of the way from the stop line to the far
+end of the visible road, measured along the road.* No camera calibration is needed,
+because everything is a fraction of a line drawn on the image.
+
+Code: `src/lane_analysis.py`, `_polyline_fraction` (projects onto the nearest segment if
+the axis has several, so curved roads work too).
+
+---
+
+### Step 2. Is each car stopped?
+
+```
+speed = (distance the ref point moved over the last 1 s) / (1 s) / h
+stopped  ⇔  speed < 0.2
+```
+
+| Symbol | Meaning |
+|---|---|
+| distance moved | Straight-line pixel distance between the ref point now and 1 s ago (30 frames). ByteTrack's `id` is what tells us which point was "this car" 1 s ago |
+| `h` | The car's own box height in pixels: its size in the image |
+| `speed` | In "box heights per second": how many of its own lengths it moved per second |
+| 0.2 | The threshold: less than 0.2 of its own size per second = stopped (≈ 1 m/s for a 5 m car) |
+
+| # | moved in 1 s | h | speed = moved / 1 / h | stopped? |
+|---|---|---|---|---|
+| 1 | 1.4 px | 74 | 1.4 / 74 = **0.019** | YES |
+| 2 | 1.4 px | 58 | **0.024** | YES |
+| 3 | 16.5 px | 92 | **0.179** | YES (creeping, still under 0.2) |
+| 4 | 105.7 px | 80 | **1.321** | no (driving) |
+| 5 | new track | 75 | — | no (needs half a second of history first) |
+
+**Why divide by h?** A far car is small in the image. Moving 1 m covers few pixels, so a
+fixed pixel threshold would call far moving cars "stopped". Dividing by the car's own
+size puts near and far cars on the same scale. **Why over 1 s?** Boxes jitter by a few
+pixels every frame; over a full second the jitter averages out. These two choices took
+false stops from 4.28 to 0.76 per vehicle.
+
+Code: `src/traffic_metrics.py`, `_is_stopped_windowed`.
+
+---
+
+### Step 3. The queue tail X
+
+Take only the **stopped** cars, sort them by p, and walk upstream from the stop line:
+
+```
+start:    the first stopped car that is inside the stop-line strip (or within its allowance of p = 0)
+continue: while  p_next − p_previous  ≤  allowance of the next car
+X       = p of the last car in the chain        (0 if there is no chain)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `allowance` | The biggest gap allowed between two cars that are still "one queue": `2 × (car's length along the road) / L_axis` |
+| car's length along the road | `|w·ux| + |h·uy|`: how long the box is in the road's direction. Car #3: 147×0.957 + 92×0.289 = 140.7 + 26.6 = **167.3 px** |
+| allowance of car #3 | 2 × 167.3 / 381.2 = **0.878** |
+
+**The walk, on this frame:**
+
+| Car | p | Check | Result |
+|---|---|---|---|
+| #3 | 0.185 | inside the stop-line strip | chain **starts**, X = 0.185 |
+| #1 | 0.250 | gap 0.250 − 0.185 = 0.065 ≤ 0.710 | joins, X = 0.250 |
+| #2 | 0.570 | gap 0.570 − 0.250 = 0.320 ≤ 0.540 | joins, **X = 0.570** |
+
+**X = 0.57: the queue reaches 57% of the way back along the West road.** The red bar in the
+picture sits at the back of car #2.
+
+**Why "contiguous"?** If a parked or misjudged car stood alone at p = 0.95, a gap of
+0.95 − 0.57 = 0.38 bigger than its allowance would stop the chain, so it could not
+falsely push X to 0.95.
+
+**Two honest observations from this frame:**
+* All lanes are projected onto one axis. Car #4 (p = 0.48, moving, in another lane) lies
+  between queue members but is ignored because it is moving.
+* On the West leg the cars are seen side-on and the axis is short (381 px), so the
+  allowance is large (0.5–0.9). The chain rule is loose here; on longer axes it is tighter.
+
+Code: `queue_tail_reach_scaled` and `_extent_along` in `src/traffic_metrics.py`.
+
+---
+
+### Step 4. The spillback risk S
+
+```
+S = clamp( X + slope × H )          H = 5 s
+slope = least-squares slope of X over the last 2.5 s (75 frames)
+clamp keeps S between 0 and 1
+```
+
+| Symbol | Meaning | Value here |
+|---|---|---|
+| `X` | Queue tail now | 0.570 |
+| `slope` | How fast X is changing, in "fraction of the road per second". Positive = queue growing backward | −0.0035 /s (essentially steady) |
+| `H` | How far ahead we look | 5 s |
+| `S` | Where the queue tail is projected to be in 5 s | 0.570 + (−0.0035)(5) = **0.552** |
+
+**What "least squares" means:** fit the best straight line through the 75 recent X values
+(one per frame) and take its slope. Using many points instead of two stops one noisy
+frame from swinging S.
+
+**Contrasting example (made up for practice):** if X had gone from 0.40 to 0.50 over 2.5 s,
+the slope would be 0.04 /s and S = 0.50 + 0.04 × 5 = **0.70**: the queue is at half the road
+and heading to 70%. If S reaches 1, the queue is projected to fill the visible road.
+
+Code: `QueuePredictor._project_risk` and `_slope_per_second`.
+
+---
+
+### Step 5. The count measures and the score
+
+| Symbol | Formula | Meaning | Value (West) |
+|---|---|---|---|
+| `D` | PCE-weighted count / saturation_count | How full the approach is by count. Car = 1, truck/bus = 3, motorcycle = 0.5. `saturation_count` = 12 for West, the most it holds | 5 cars / 12 = **0.417** |
+| `Q` | cars in the stop-line strip / queue_capacity | How full the small zone at the stop line is | 1 / 4 = **0.250** |
+| `F` | clamp(Q + slope_Q × 3 s) | Count forecast 3 s ahead | **0.630** (Q was rising) |
+| `α` | weight between D and Q | | 0.5 |
+| `ω`, `ρ` | weights of F and S in the proposed S4 score | | 0.3, 0.3 |
+
+```
+Score = (1 − ω − ρ) · (α·D + (1 − α)·Q) + ω·F + ρ·S
+      = 0.4 × (0.5 × 0.417 + 0.5 × 0.250) + 0.3 × 0.630 + 0.3 × 0.552
+      = 0.4 × 0.333 + 0.189 + 0.166 = 0.488
+```
+
+All four approaches on this frame:
+
+| Approach | D | Q | X | S | Score |
+|---|---|---|---|---|---|
+| North | 0.42 | 0.50 | 0.35 | 0.16 | 0.253 |
+| East | 0.00 | 0.00 | 0.00 | 0.00 | 0.000 |
+| South | 0.33 | 0.00 | **0.77** | 0.70 | 0.275 |
+| West | 0.42 | 0.25 | 0.57 | 0.55 | **0.488** |
+
+West has the highest score, so West would get the next green.
+
+**Something to notice:** South has the longest queue on this frame (X = 0.77), but its Q is
+0 and its F is 0, so its count terms are low and its score is only 0.275. That is the
+spatial information X adds: by counts alone South looks empty at the stop line, but its
+queue reaches 77% of the way back. Study 1 found that over whole simulations this rarely
+changes which approach is chosen; study 2 uses S relative to each road's own length in
+the green timing instead (`report/RESEARCH_PRESENTATION.md` §10 C3).
+
+---
+
+### Study 2's formula with the same numbers
+
+```
+score_i = D_i + λ ( 1/(α_b − S_i) − 1/α_b )      λ = 1, α_b = 1.1
+```
+| Symbol | Meaning |
+|---|---|
+| `λ` | How strongly the storage term counts |
+| `α_b` | Slightly above 1, so the term stays finite when S = 1 |
+| `1/(α_b − S) − 1/α_b` | Zero when the road is empty; grows slowly at first, then very fast as S nears 1 |
+
+West: 0.417 + (1/(1.1 − 0.552) − 1/1.1) = 0.417 + (1.825 − 0.909) = **1.333**.
+South: 0.333 + (1/(1.1 − 0.70) − 0.909) = 0.333 + (2.5 − 0.909) = **1.924**.
+With the storage term, **South** (the road closer to filling up) would be served first.
+(In study 2's simulation, D uses one common normaliser for every road; the numbers here use
+the video config's per-approach values, so they illustrate the formula rather than reproduce
+a simulation decision.)
+
+And the timing rule: after 20 s of green on another road, the green ends early if some
+waiting road has S ≥ 0.85. On this frame no road is at 0.85, so no green would be cut.
+
+---
+
+### Practise
+
+1. Run `python audit/explain_frame.py --find --approach South` and redo Steps 1–4 by hand
+   for that frame. Check your numbers against the printout.
+2. In Step 3, what would X be if car #2 were moving? (Answer: 0.250.)
+3. A car has h = 40 px and moved 10 px in 1 s. Stopped? (10/40 = 0.25 → no.)
+4. X went 0.30 → 0.45 over 2.5 s. What is S? (slope 0.06/s → S = 0.45 + 0.30 = 0.75.)
+5. Why is the reference point the bottom of the box and not its centre?
+
+---
+
+<a id="part-5"></a>
+# Part 5 — Research Presentation (department format)
 
 *Source: `report/RESEARCH_PRESENTATION.md`*
 
@@ -936,8 +1183,8 @@ delay (Table 3).
 
 ---
 
-<a id="part-5"></a>
-# Part 5 — Final Report
+<a id="part-6"></a>
+# Part 6 — Final Report
 
 *Source: `report/FINAL_REPORT.md`*
 
@@ -1459,8 +1706,8 @@ design decision each one led to.
 
 ---
 
-<a id="part-6"></a>
-# Part 6 — System Architecture
+<a id="part-7"></a>
+# Part 7 — System Architecture
 
 *Source: `docs/architecture.md`*
 
@@ -1573,8 +1820,8 @@ road has `S ≥ 0.85` and more than the active one.
 
 ---
 
-<a id="part-7"></a>
-# Part 7 — Technical Guide
+<a id="part-8"></a>
+# Part 8 — Technical Guide
 
 *Source: `docs/TECHNICAL_GUIDE.md`*
 
@@ -2102,8 +2349,8 @@ Results and their interpretation: `report/RESEARCH_PRESENTATION.md` §10 C3.
 
 ---
 
-<a id="part-8"></a>
-# Part 8 — Audit Report
+<a id="part-9"></a>
+# Part 9 — Audit Report
 
 *Source: `AUDIT_REPORT.md`*
 
@@ -2447,8 +2694,8 @@ the closed-loop result whatever it is, and exact answers to the 32 viva question
 
 ---
 
-<a id="part-9"></a>
-# Part 9 — Closed-Loop Experiment Protocol
+<a id="part-10"></a>
+# Part 10 — Closed-Loop Experiment Protocol
 
 *Source: `sim/PROTOCOL.md`*
 
@@ -2502,8 +2749,8 @@ to the signal**, compared with the count-based queue (Q) and the count-based for
 
 ---
 
-<a id="part-10"></a>
-# Part 10 — Study 2 Protocol (storage-aware control)
+<a id="part-11"></a>
+# Part 11 — Study 2 Protocol (storage-aware control)
 
 *Source: `sim/PROTOCOL_STUDY2.md`*
 
@@ -2583,8 +2830,8 @@ delay) and increases delay beyond capacity (3600 veh/h: +94% uniform, +76% short
 
 ---
 
-<a id="part-11"></a>
-# Part 11 — Limitation Analysis of the Papers
+<a id="part-12"></a>
+# Part 12 — Limitation Analysis of the Papers
 
 *Source: `docs/research/paper_limitations_analysis.md`*
 
@@ -3092,8 +3339,8 @@ doi:10.1109/TITS.2022.3209606. Facts below were checked against the PDF.
 
 ---
 
-<a id="part-12"></a>
-# Part 12 — The Papers (verified facts)
+<a id="part-13"></a>
+# Part 13 — The Papers (verified facts)
 
 *Source: `docs/papers/README.md`*
 
@@ -3130,8 +3377,8 @@ Further T-ITS work considered for this project: `docs/research/additional_tits_p
 
 ---
 
-<a id="part-13"></a>
-# Part 13 — Additional Recent T-ITS Papers
+<a id="part-14"></a>
+# Part 14 — Additional Recent T-ITS Papers
 
 *Source: `docs/research/additional_tits_papers.md`*
 
@@ -3212,8 +3459,8 @@ main finding, and Zhu et al. strengthens future work. Neither requires new exper
 
 ---
 
-<a id="part-14"></a>
-# Part 14 — Glossary of Concepts and Terms
+<a id="part-15"></a>
+# Part 15 — Glossary of Concepts and Terms
 
 *Source: `PROJECT_EXPLAINED.md`*
 
@@ -3570,8 +3817,8 @@ and network models. A single camera at one junction provides none of those. The
 
 ---
 
-<a id="part-15"></a>
-# Part 15 — Viva Questions and Answers
+<a id="part-16"></a>
+# Part 16 — Viva Questions and Answers
 
 *Source: `docs/VIVA_QA.md`*
 
@@ -3961,8 +4208,8 @@ demand.
 
 ---
 
-<a id="part-16"></a>
-# Part 16 — Study Guide and Presentation Plan
+<a id="part-17"></a>
+# Part 17 — Study Guide and Presentation Plan
 
 *Source: `docs/STUDY_GUIDE.md`*
 

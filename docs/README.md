@@ -5,6 +5,7 @@ Everything needed to understand, reproduce and present the project. Read in this
 | # | Document | Read it to |
 |---|---|---|
 | 1 | [`EXPLAIN_TO_PROFESSOR.md`](EXPLAIN_TO_PROFESSOR.md) | Know the story, what is yours vs borrowed, the key numbers, the 20-minute talk and hard questions |
+| 1b | [`WORKED_EXAMPLE.md`](WORKED_EXAMPLE.md) | Follow one real camera frame through every formula: box → position p → stopped → X → S → score, with every number computed by hand (`python audit/explain_frame.py`) |
 | 2 | [`../report/RESEARCH_PRESENTATION.md`](../report/RESEARCH_PRESENTATION.md) | See the whole project in the department's presentation format, with every result table |
 | 3 | [`../PROJECT_EXPLAINED.md`](../PROJECT_EXPLAINED.md) | Look up any term or abbreviation (SUMO, PCE, FASC, CI, β, ...) |
 | 4 | [`TECHNICAL_GUIDE.md`](TECHNICAL_GUIDE.md) | Understand each stage: formulas, code locations, worked examples (§20 = study 2) |

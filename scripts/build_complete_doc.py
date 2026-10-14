@@ -18,6 +18,7 @@ PARTS = [
     ("Overview", "README.md", "from:## The result in five points"),
     ("Documentation Index", "docs/README.md", "all"),
     ("Explaining the Project to the Professor", "docs/EXPLAIN_TO_PROFESSOR.md", "all"),
+    ("Worked Example: One Frame Through Every Formula", "docs/WORKED_EXAMPLE.md", "all"),
     ("Research Presentation (department format)", "report/RESEARCH_PRESENTATION.md", "all"),
     ("Final Report", "report/FINAL_REPORT.md", "all"),
     ("System Architecture", "docs/architecture.md", "all"),
