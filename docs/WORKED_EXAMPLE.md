@@ -237,3 +237,23 @@ waiting road has S ≥ 0.85. On this frame no road is at 0.85, so no green would
 3. A car has h = 40 px and moved 10 px in 1 s. Stopped? (10/40 = 0.25 → no.)
 4. X went 0.30 → 0.45 over 2.5 s. What is S? (slope 0.06/s → S = 0.45 + 0.30 = 0.75.)
 5. Why is the reference point the bottom of the box and not its centre?
+
+---
+
+## Where each formula comes from
+
+| Formula | Source | Borrowed vs chosen |
+|---|---|---|
+| D = Σ count × PCE | Raza et al. 2025, Eq. 1; PCE is a standard traffic-engineering unit | Normalising by the road's `saturation_count` (to 0–1) is this project's choice |
+| Q = cars in stop-line strip / capacity | Queue-length-based control is common in the literature | Strip and capacity set by hand for this camera |
+| α·D + (1−α)·Q | The original codebase's weighted average | α = 0.5 is a design choice |
+| F = Q + slope × 3 s | Idea from Wei et al. 2025 (act on where the queue is heading); least-squares line extension is standard statistics | 3 s horizon is a choice |
+| Stopped: moved < 0.2 box heights in 1 s | This project; dividing speed by object size is a common way to cancel perspective | 0.2 and 1 s fixed during the audit |
+| X = end of the contiguous stopped chain | This project; inspired by Li et al. 2025's queue profile | "2 car lengths" gap is a choice |
+| S = X + slope × 5 s | Same line extension as F, applied to X | 5 s horizon, 2.5 s window are choices |
+| Score = 0.4·(αD+(1−α)Q) + 0.3F + 0.3S | Project design (weighted average) | Weights picked by hand and deliberately **not tuned** |
+| Barrier 1/(α−S) − 1/α | Mohajerpoor et al. 2023, Eq. 17: Λ/(αΛ−δ) divided by Λ gives 1/(α − S) | The −1/α shift, λ = 1, α = 1.1 are choices |
+| Protection: S ≥ 0.85 | Mohajerpoor et al. 2023, Eq. 9: queue ≤ β × link length | β = 0.85 and the 20 s guard chosen on validation seeds by a pre-written rule |
+| Actuated gap-out | Standard practice (FHWA Signal Timing Manual) | 2 s passage time came from the project's own testing |
+| Max pressure n/C | Gregoire et al. 2015 | Used as a baseline |
+| Paired 95% t-interval | Standard statistics | — |
