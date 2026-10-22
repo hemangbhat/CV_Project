@@ -5,6 +5,7 @@ Everything needed to understand, reproduce and present the project. Read in this
 | # | Document | Read it to |
 |---|---|---|
 | 1 | [`EXPLAIN_TO_PROFESSOR.md`](EXPLAIN_TO_PROFESSOR.md) | Know the story, what is yours vs borrowed, the key numbers, the 20-minute talk and hard questions |
+| 0 | [`MASTER_GUIDE.pdf`](MASTER_GUIDE.pdf) ([source](MASTER_GUIDE.md)) | **Everything in one printable PDF:** the talk stage by stage, every detail (what/why/how/where/source), 34 deep cross-questions with answers, numbers, formula sources, code map. Rebuild with `sh scripts/build_master_pdf.sh` |
 | 1a | [`PRESENTATION_FLOW.md`](PRESENTATION_FLOW.md) | The whole talk as one story: what to say, why, how, where in the code, and the bridge sentence between stages |
 | 1b | [`WORKED_EXAMPLE.md`](WORKED_EXAMPLE.md) | Follow one real camera frame through every formula: box → position p → stopped → X → S → score, with every number computed by hand (`python audit/explain_frame.py`) |
 | 2 | [`../report/RESEARCH_PRESENTATION.md`](../report/RESEARCH_PRESENTATION.md) | See the whole project in the department's presentation format, with every result table |

@@ -201,6 +201,7 @@ Everything needed to understand, reproduce and present the project. Read in this
 | # | Document | Read it to |
 |---|---|---|
 | 1 | [`EXPLAIN_TO_PROFESSOR.md`](EXPLAIN_TO_PROFESSOR.md) | Know the story, what is yours vs borrowed, the key numbers, the 20-minute talk and hard questions |
+| 0 | [`MASTER_GUIDE.pdf`](MASTER_GUIDE.pdf) ([source](MASTER_GUIDE.md)) | **Everything in one printable PDF:** the talk stage by stage, every detail (what/why/how/where/source), 34 deep cross-questions with answers, numbers, formula sources, code map. Rebuild with `sh scripts/build_master_pdf.sh` |
 | 1a | [`PRESENTATION_FLOW.md`](PRESENTATION_FLOW.md) | The whole talk as one story: what to say, why, how, where in the code, and the bridge sentence between stages |
 | 1b | [`WORKED_EXAMPLE.md`](WORKED_EXAMPLE.md) | Follow one real camera frame through every formula: box → position p → stopped → X → S → score, with every number computed by hand (`python audit/explain_frame.py`) |
 | 2 | [`../report/RESEARCH_PRESENTATION.md`](../report/RESEARCH_PRESENTATION.md) | See the whole project in the department's presentation format, with every result table |
@@ -352,7 +353,7 @@ queue tail as a share of *that road's own* length, so it is storage-aware.
 | Comparison | Result |
 |---|---|
 | vs Raza-style | 34–87 s less delay per vehicle in 9 of 10 conditions; most of this is actuated timing |
-| vs actuated, under capacity | 0.9–1.7 s less delay (small, significant) |
+| vs actuated, under capacity | 0.9–1.7 s less delay (small, significant) (cannot be attributed to the storage term alone: the proposed controller also skips empty roads and never repeats the same road, which actuated round-robin does not; the experiment does not separate these) |
 | vs actuated, near capacity (3000 veh/h) | **26% and 20% less spillback**, delay unchanged |
 | camera vs count, short road, 3000 veh/h | camera: 115 s less spillback |
 | beyond capacity (3600 veh/h) | **fails**: delay about doubles |
@@ -1331,7 +1332,7 @@ guard results were seen; the protocol was committed before any test seed ran
 |---|---|---|---|
 | Better than the base paper? | 9 of 10 conditions | −34 to −87, all significant | lower or equal |
 | | short-minor 3600 | **+21.0 ± 10.5 (worse)** | −1035 ± 149 |
-| Better than standard actuated? | ≤ 2400 veh/h (6 conditions) | −0.9 to −1.7, all significant | no difference, except short-minor 2400: −17.6 ± 14.9 |
+| Better than standard actuated? | ≤ 2400 veh/h (6 conditions) | −0.9 to −1.7, all significant; **cannot be attributed to the storage term alone** (see note below the table) | no difference, except short-minor 2400: −17.6 ± 14.9 |
 | | uniform 3000 | −1.3 ± 0.9 | **−31.9 ± 20.6 (−26%)** |
 | | short-minor 3000 | +0.8 ± 1.6 (n.s.) | **−191.8 ± 73.3 (−20%)** |
 | | 3600 (both geometries) | **+90.9 ± 9.8, +80.7 ± 8.1 (worse)** | +1057, +229 (worse) |
@@ -1341,6 +1342,8 @@ guard results were seen; the protocol was committed before any test seed ran
 | Does the camera's spatial measure beat a count? | short-minor 3000 | −0.1 ± 1.9 (n.s.) | **−115.4 ± 81.2** |
 | | other conditions ≤ 3000 | within ±0.4 (one cell, uniform 1800, +0.4 ± 0.3, excludes 0) | n.s. |
 | | 3600 | **+48.0, +29.9 (worse)** | mixed |
+
+**Note on the under-capacity delay gain.** The 0.9–1.7 s gain over actuated control below capacity cannot be credited to the storage term alone. The proposed controller also skips roads with no vehicles and never gives the same road two greens in a row, while actuated control here is round-robin. No ablation arm separates those two habits from the barrier term (PROP_B, which has both, shows the same gain), so the claim this project makes for the enhancement is the **spillback reduction near capacity**, not the small delay gain.
 
 **Visual comparison.** True queue tail on the major (North, 150 m) and short minor (East,
 60 m) approach, one test seed fixed in advance, short-minor 3000 veh/h:
@@ -1855,7 +1858,7 @@ storage. Junctions: all approaches 150 m, or minor street 60 m. Demand 1200–36
 | Paired comparison (20 seeds, 95% CI) | Result |
 |---|---|
 | vs Raza-style | delay −34 to −87 s in 9 of 10 conditions; +21.0 ± 10.5 s at short-minor 3600 |
-| vs actuated, ≤ 2400 veh/h | delay −0.9 to −1.7 s (significant, small) |
+| vs actuated, ≤ 2400 veh/h | delay −0.9 to −1.7 s (significant, small) (cannot be attributed to the storage term alone: the proposed controller also skips empty roads and never repeats the same road, which actuated round-robin does not; the experiment does not separate these) |
 | vs actuated, 3000 veh/h | blocked entry −31.9 ± 20.6 s (−26%, uniform), −191.8 ± 73.3 s (−20%, short minor); delay n.s. |
 | protection alone (vs barrier only), 3000 veh/h | blocked entry −25.3 ± 19.1 s and −229.2 ± 70.3 s; delay n.s. |
 | camera reach vs stopped count, short minor 3000 | blocked entry −115.4 ± 81.2 s |

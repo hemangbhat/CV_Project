@@ -371,7 +371,7 @@ storage. Junctions: all approaches 150 m, or minor street 60 m. Demand 1200–36
 | Paired comparison (20 seeds, 95% CI) | Result |
 |---|---|
 | vs Raza-style | delay −34 to −87 s in 9 of 10 conditions; +21.0 ± 10.5 s at short-minor 3600 |
-| vs actuated, ≤ 2400 veh/h | delay −0.9 to −1.7 s (significant, small) |
+| vs actuated, ≤ 2400 veh/h | delay −0.9 to −1.7 s (significant, small) (cannot be attributed to the storage term alone: the proposed controller also skips empty roads and never repeats the same road, which actuated round-robin does not; the experiment does not separate these) |
 | vs actuated, 3000 veh/h | blocked entry −31.9 ± 20.6 s (−26%, uniform), −191.8 ± 73.3 s (−20%, short minor); delay n.s. |
 | protection alone (vs barrier only), 3000 veh/h | blocked entry −25.3 ± 19.1 s and −229.2 ± 70.3 s; delay n.s. |
 | camera reach vs stopped count, short minor 3000 | blocked entry −115.4 ± 81.2 s |

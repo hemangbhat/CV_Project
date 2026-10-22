@@ -363,7 +363,7 @@ guard results were seen; the protocol was committed before any test seed ran
 |---|---|---|---|
 | Better than the base paper? | 9 of 10 conditions | −34 to −87, all significant | lower or equal |
 | | short-minor 3600 | **+21.0 ± 10.5 (worse)** | −1035 ± 149 |
-| Better than standard actuated? | ≤ 2400 veh/h (6 conditions) | −0.9 to −1.7, all significant | no difference, except short-minor 2400: −17.6 ± 14.9 |
+| Better than standard actuated? | ≤ 2400 veh/h (6 conditions) | −0.9 to −1.7, all significant; **cannot be attributed to the storage term alone** (see note below the table) | no difference, except short-minor 2400: −17.6 ± 14.9 |
 | | uniform 3000 | −1.3 ± 0.9 | **−31.9 ± 20.6 (−26%)** |
 | | short-minor 3000 | +0.8 ± 1.6 (n.s.) | **−191.8 ± 73.3 (−20%)** |
 | | 3600 (both geometries) | **+90.9 ± 9.8, +80.7 ± 8.1 (worse)** | +1057, +229 (worse) |
@@ -373,6 +373,8 @@ guard results were seen; the protocol was committed before any test seed ran
 | Does the camera's spatial measure beat a count? | short-minor 3000 | −0.1 ± 1.9 (n.s.) | **−115.4 ± 81.2** |
 | | other conditions ≤ 3000 | within ±0.4 (one cell, uniform 1800, +0.4 ± 0.3, excludes 0) | n.s. |
 | | 3600 | **+48.0, +29.9 (worse)** | mixed |
+
+**Note on the under-capacity delay gain.** The 0.9–1.7 s gain over actuated control below capacity cannot be credited to the storage term alone. The proposed controller also skips roads with no vehicles and never gives the same road two greens in a row, while actuated control here is round-robin. No ablation arm separates those two habits from the barrier term (PROP_B, which has both, shows the same gain), so the claim this project makes for the enhancement is the **spillback reduction near capacity**, not the small delay gain.
 
 **Visual comparison.** True queue tail on the major (North, 150 m) and short minor (East,
 60 m) approach, one test seed fixed in advance, short-minor 3000 veh/h:

@@ -110,7 +110,7 @@ queue tail as a share of *that road's own* length, so it is storage-aware.
 | Comparison | Result |
 |---|---|
 | vs Raza-style | 34–87 s less delay per vehicle in 9 of 10 conditions; most of this is actuated timing |
-| vs actuated, under capacity | 0.9–1.7 s less delay (small, significant) |
+| vs actuated, under capacity | 0.9–1.7 s less delay (small, significant) (cannot be attributed to the storage term alone: the proposed controller also skips empty roads and never repeats the same road, which actuated round-robin does not; the experiment does not separate these) |
 | vs actuated, near capacity (3000 veh/h) | **26% and 20% less spillback**, delay unchanged |
 | camera vs count, short road, 3000 veh/h | camera: 115 s less spillback |
 | beyond capacity (3600 veh/h) | **fails**: delay about doubles |
