@@ -1,15 +1,36 @@
-# Vision-Measured Spatial Queue Reach for Adaptive Traffic Signal Control
+# Vision-Measured Queue Tails for Storage-Aware Adaptive Traffic Signal Control
 
-Computer Vision course project. A camera-based adaptive traffic-signal controller in the
-style of **Raza et al. (2025)** (YOLO + PCE density), extended with a vision-measured
-**spatial queue reach X** and a forward-looking **local spillback risk S**. The extension
-is motivated by two 2025 IEEE T-ITS papers (**Li et al.** — queue profile and
-over-saturation; **Wei et al.** — predictive queue dynamics and spillback) and evaluated
-open-loop on real footage and closed-loop in SUMO.
+Computer Vision course project. A single traffic camera (YOLOv8 + ByteTrack) is used to
+measure **where each queue ends** (queue tail X) and where it is heading (risk S). The
+measurement is then used in an adaptive signal controller built on the density-based
+method of **Raza et al. (2025)**, in two ways: as a term in the selection score, and,
+following the spillback constraint of **Mohajerpoor et al. (IEEE T-ITS 2023)**, as a
+storage limit on green time. Both are evaluated closed-loop in SUMO against fixed-time,
+actuated, capacity-aware max pressure and Raza-style control.
+
+**Paper (IEEE format):** [`paper/Vision_Measured_Queue_Tails_Paper.pdf`](paper/Vision_Measured_Queue_Tails_Paper.pdf)
+ · LaTeX source [`paper/main.tex`](paper/main.tex)
 
 ```
-Existing paper (Raza) → limitation (reactive, count-only) → T-ITS research (Li, Wei)
-→ own enhancement (queue axis, queue tail X, spillback risk S) → ablation → measured result
+Existing paper (Raza) → limitation (count-only, storage-blind) → newer research
+(Mohajerpoor; Li; Wei) → enhancement (queue tail X, risk S, storage-aware control)
+→ ablation against baselines → measured result
+```
+
+## Quick start
+
+```bash
+git clone https://github.com/hemangbhat/CV_Project.git && cd CV_Project
+pip install -r requirements-dev.txt          # OpenCV, Ultralytics, NumPy, Matplotlib, pytest
+pip install -r requirements-sim.txt          # SUMO (only for the simulation experiments)
+git lfs pull                                 # the three video clips
+python -m pytest -q                          # 800+ tests, no GPU or video needed
+
+# every measurement on one real frame, printed step by step (uses the cached tracks)
+python audit/explain_frame.py --frame 2036 --approach West
+
+# one closed-loop simulation run of the proposed controller
+python -c "from sim.study2 import run, METHODS; r = run('short_minor_3000', METHODS['PROP'], 200); print(r['mean_delay'], r['blocked_seconds'])"
 ```
 
 ## The result in five points
