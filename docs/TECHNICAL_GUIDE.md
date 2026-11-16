@@ -408,7 +408,7 @@ the intervals are typically ±0.1–0.5 s.
 
 ## 18. Testing
 
-`python -m pytest -q` runs 790+ tests in about 30 s, with no GPU, weights or video needed
+`python -m pytest -q` runs 800+ tests in about 30 s, with no GPU, weights or video needed
 (detector and tracker are replaced by fakes). They include property-based tests
 (Hypothesis) for the invariants: exactly one non-red approach, legal transitions only,
 starvation bound, score in [0, 1], Q ≤ count. Tests specific to this project's measurements:

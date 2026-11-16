@@ -57,25 +57,22 @@ python -c "from sim.study2 import run, METHODS; r = run('short_minor_3000', METH
    measure beats a stopped-vehicle count. Beyond capacity the protection rule fails
    (delay roughly doubles). `report/RESEARCH_PRESENTATION.md` has the full results.
 
-## Read in this order
+## Documents
 
-| Document | What it is for |
+| Document | What it is |
 |---|---|
-| [`docs/EXPLAIN_TO_PROFESSOR.md`](docs/EXPLAIN_TO_PROFESSOR.md) | **Read first before presenting:** the story, what is mine vs borrowed, key numbers, 20-minute talk plan, hard questions |
-| [`report/RESEARCH_PRESENTATION.md`](report/RESEARCH_PRESENTATION.md) | **The project in the department's research-presentation format:** problem formulation, literature table with limitations, gaps, objectives, workflow, contributions C1–C3 with result tables, takeaways |
-| [`COMPLETE_PROJECT_DOCUMENT.md`](COMPLETE_PROJECT_DOCUMENT.md) | **Everything in one file:** report, architecture, technical guide, audit, protocol, papers, glossary, viva answers and study plan, with an "In simple terms" box after every part |
-| [`PROJECT_EXPLAINED.md`](PROJECT_EXPLAINED.md) | Every concept, term and abbreviation (SUMO, YOLO, ByteTrack, PCE, MPC, CI, ...) with its full form, meaning and role in this project |
-| [`report/FINAL_REPORT.md`](report/FINAL_REPORT.md) | The research report: problem → Raza → Li/Wei → enhancement → experiments → results → limitations |
+| [`paper/Vision_Measured_Queue_Tails_Paper.pdf`](paper/Vision_Measured_Queue_Tails_Paper.pdf) | **The paper** (IEEE format); LaTeX source in `paper/` (conference and journal layouts) |
 | [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | How every stage works: formulas, code locations, design reasons, worked examples |
-| [`docs/STUDY_GUIDE.md`](docs/STUDY_GUIDE.md) | How to learn the project in depth: derivations, exercises, presentation and demo plan |
-| [`docs/VIVA_QA.md`](docs/VIVA_QA.md) | Exact answers to the 32 expected questions and the hard follow-ups |
-| [`AUDIT_REPORT.md`](AUDIT_REPORT.md) | What was wrong with the earlier results, how it was found, how it was fixed |
-| [`sim/PROTOCOL.md`](sim/PROTOCOL.md) | The closed-loop experiment, frozen before the test runs |
-| [`sim/PROTOCOL_STUDY2.md`](sim/PROTOCOL_STUDY2.md) | Study 2 (storage-aware control), its validation history and selection rule |
+| [`docs/WORKED_EXAMPLE.md`](docs/WORKED_EXAMPLE.md) | One real frame followed through every formula, reproducible with `audit/explain_frame.py` |
 | [`docs/architecture.md`](docs/architecture.md) | System diagram and module map |
-| [`docs/research/`](docs/research/) | Literature review and limitation analysis of the papers |
-| [`docs/papers/`](docs/papers/) | The papers and their verified facts |
-| [`docs/archive/`](docs/archive/) | Pre-audit documents, kept for the record; their headline results are superseded |
+| [`report/FINAL_REPORT.md`](report/FINAL_REPORT.md) | Long-form report including the audit of the earlier results and both studies |
+| [`report/RESEARCH_PRESENTATION.md`](report/RESEARCH_PRESENTATION.md) | The project in presentation order, with all result tables |
+| [`AUDIT_REPORT.md`](AUDIT_REPORT.md) | What was wrong with the earlier results, how it was found, how it was fixed |
+| [`sim/PROTOCOL.md`](sim/PROTOCOL.md), [`sim/PROTOCOL_STUDY2.md`](sim/PROTOCOL_STUDY2.md) | The two experiment protocols, fixed before the test runs |
+| [`results/sim/study2/tables.md`](results/sim/study2/tables.md) | Full study 2 result tables (regenerate with `python -m sim.study2_figures`) |
+| [`docs/research/`](docs/research/), [`docs/papers/`](docs/papers/) | Literature review, limitation analysis, and verified facts from the papers |
+| [`docs/README.md`](docs/README.md) | Index of the remaining notes (glossary, study guide, question bank) |
+| [`docs/archive/`](docs/archive/) | Earlier documents, kept for the record; their headline results are superseded |
 
 ## Repository map
 
@@ -94,7 +91,7 @@ audit/               scripts that reproduce every audit finding
 config/              bellevue_116th_v2.json (final geometry) and final/ (one file per ablation arm)
 results/             track_cache/, sim/ (closed-loop results), run_logs_legacy/ (pre-audit)
 report/              FINAL_REPORT.md, figures, validation images
-tests/               790+ unit and property tests (no GPU or video needed)
+tests/               800+ unit and property tests (no GPU or video needed)
 ```
 
 ## Setup
