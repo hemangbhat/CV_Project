@@ -74,7 +74,7 @@ SIMPLE: dict[tuple[str, str], str] = {
     ("sim/PROTOCOL_STUDY2.md", "Question"):
         "The rules for the second experiment, written down before the final test, including how "
         "the settings were chosen on separate practice runs.",
-    ("README.md", "Read in this order"):
+    ("README.md", "Documents"):
         "A reading list. This combined document already contains all of these files.",
     ("README.md", "Repository map"):
         "Where things live: `src/` is the system, `sim/` is the simulation test, `config/` holds "

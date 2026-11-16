@@ -95,6 +95,9 @@ files in the repository.
 | [`docs/README.md`](docs/README.md) | Index of the remaining notes (glossary, study guide, question bank) |
 | [`docs/archive/`](docs/archive/) | Earlier documents, kept for the record; their headline results are superseded |
 
+
+> 💡 **In simple terms:** A reading list. This combined document already contains all of these files.
+
 ### Repository map
 
 ```
