@@ -1,0 +1,72 @@
+Submission validation
+Source commit: 86841127d181157f3587951244f165508e04c42b
+Run: https://github.com/hemangbhat/CV_Project/actions/runs/43903740657
+
+TABLES
+main.tex: 176 Study 2 values, 25 Study 1 means and 21 Table I values match raw data.
+main_journal.tex: 176 Study 2 values, 25 Study 1 means and 21 Table I values match raw data.
+Study 2: 1,600 exact + 200 noise runs, unique keys and complete paired seeds 200-219.
+Eight fixed-time runs at 3600 veh/h have unfinished vehicles: censoring is disclosed.
+Identical report bodies and both author roll numbers verified.
+
+
+TESTS
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 35%]
+........................................................................ [ 44%]
+........................................................................ [ 53%]
+........................................................................ [ 62%]
+........................................................................ [ 71%]
+........................................................................ [ 80%]
+........................................................................ [ 89%]
+........................................................................ [ 98%]
+...........                                                              [100%]
+803 passed in 27.62s
+
+
+REPLAYS
+short_minor_3000 ACT seed 200: delay, blockage and green sequence reproduced
+short_minor_3000 PROP seed 200: delay, blockage and green sequence reproduced
+short_minor_3600 ACT seed 200: delay, blockage and green sequence reproduced
+short_minor_3600 PROP seed 200: delay, blockage and green sequence reproduced
+
+
+Creator:         TeX
+Producer:        pdfTeX-1.40.25
+CreationDate:    Mon Nov 16 16:10:43 2026 UTC
+ModDate:         Mon Nov 16 16:10:43 2026 UTC
+Custom Metadata: yes
+Metadata Stream: no
+Tagged:          no
+UserProperties:  no
+Suspects:        no
+Form:            none
+JavaScript:      no
+Pages:           6
+Encrypted:       no
+Page size:       612 x 792 pts (letter)
+Page rot:        0
+File size:       879020 bytes
+Optimized:       no
+PDF version:     1.5
+
+Creator:         TeX
+Producer:        pdfTeX-1.40.25
+CreationDate:    Mon Nov 16 16:10:44 2026 UTC
+ModDate:         Mon Nov 16 16:10:44 2026 UTC
+Custom Metadata: yes
+Metadata Stream: no
+Tagged:          no
+UserProperties:  no
+Suspects:        no
+Form:            none
+JavaScript:      no
+Pages:           6
+Encrypted:       no
+Page size:       612 x 792 pts (letter)
+Page rot:        0
+File size:       879149 bytes
+Optimized:       no
+PDF version:     1.5
