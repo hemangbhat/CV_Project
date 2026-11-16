@@ -13,14 +13,14 @@ from generated summary tables. It verifies:
 
 - All 176 values in Tables III-V, including the displayed paired confidence intervals.
 - The 25 representative Study 1 delay means in Table II.
-- The three stop-event values in Table I.
+- All 21 stop-event and percentage values in Table I.
 - 1,600 exact-sensor and 200 noise runs for Study 2, with complete unique paired seeds.
 - Identical report bodies in the conference and journal sources and both roll numbers.
 
-One numerical correction was necessary: ACT, uniform 3000 veh/h, Table IV is **120**
+Two rounding corrections were necessary: ACT, uniform 3000 veh/h, Table IV is **120**
 approach-seconds when rounded directly from 120.475. The earlier 121 appears consistent
 with rounding twice (120.475 → 120.5 → 121). Other Study 2 table entries agree with the
-raw results to their displayed precision.
+raw results to their displayed precision. Table I's North nonzero share with the final geometry is 70% (70.4658%), rather than 71%.
 
 ## Corrections to the paper
 

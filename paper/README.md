@@ -34,9 +34,9 @@ tests, verifies tables against the raw logs, replays representative SUMO runs, c
 both layouts and rebuilds the two PDFs and the ZIP together.
 
 Table I is a **YOLOv8n** measurement audit from `report/measurement_compare.json`.
-The final YOLOv8m measurements are described separately. Table II uses the saturating
+The final YOLOv8m measurements are described separately. Table II uses the physical
 density normaliser. Tables III-V come from the raw logs in `results/sim/study2/`.
 The independent checker verifies all 176 Study 2 values, 25 Study 1 means and the
-three Table I stop-event values in both sources.
+21 Table I values in both sources.
 
 [Submission audit](../docs/SUBMISSION_AUDIT.md) records the claim and method corrections.

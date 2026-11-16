@@ -101,7 +101,7 @@ def main():
                  ("S1", "actuated"), ("S4", "actuated")],
             ):
                 data = [r["mean_delay"] for r in study1 if r["arm"] == arm and
-                        r["timing"] == timing and r["norm"] == "saturating" and
+                        r["timing"] == timing and r["norm"] == "physical" and
                         r["scenario"] == names[name]]
                 assert len(data) == 20
                 check(value, statistics.fmean(data), 1, f"{source} Table II {name} {arm}")
@@ -111,7 +111,17 @@ def main():
         for value, mode in zip([numbers(x)[0] for x in stops.split(" & ")[1:]],
                                ["legacy", "robust", "v2"]):
             check(value, measurement[mode]["stops_per_vehicle"], 2, f"{source} Table I {mode}")
-        print(f"{source}: 176 Study 2 values, 25 Study 1 means and 3 stop-event values match raw data.")
+        for line in table(text, "tab:measure"):
+            approach = line.split(":", 1)[0]
+            if approach not in ("North", "South", "West"):
+                continue
+            for string, mode in zip(line.split(" & ")[1:], ("legacy", "robust", "v2")):
+                for part, field in zip(string.split(" / "), ("nonzero", "jumps_gt_0p3")):
+                    displayed = re.search(r"(\d+(?:\.\d+)?)", part).group(1)
+                    precision = len(displayed.split(".")[1]) if "." in displayed else 0
+                    actual = 100 * measurement[mode]["approaches"][approach]["X"][field]
+                    check(float(displayed), actual, precision, f"{source} Table I {approach} {mode} {field}")
+        print(f"{source}: 176 Study 2 values, 25 Study 1 means and 21 Table I values match raw data.")
     a = (ROOT / "paper/main.tex").read_text().split(r"\maketitle", 1)[1]
     b = (ROOT / "paper/main_journal.tex").read_text().split(r"\maketitle", 1)[1]
     assert a == b, "The two layouts have different report bodies"

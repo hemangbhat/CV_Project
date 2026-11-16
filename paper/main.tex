@@ -190,7 +190,7 @@ instead.
  &         & test   & new geometry\\
 \midrule
 Stops per vehicle & 4.28 & 0.46 & 0.76\\
-North: $X>0$ / jump & 99\% / 7.3\% & 0.2\% / 0.06\% & 71\% / 0.06\%\\
+North: $X>0$ / jump & 99\% / 7.3\% & 0.2\% / 0.06\% & 70\% / 0.06\%\\
 South: $X>0$ / jump & 58\% / 3.0\% & 0\% / 0\% & 48\% / 1.1\%\\
 West: $X>0$ / jump & 59\% / 4.8\% & 0.2\% / 0\% & 58\% / 0.5\%\\
 \bottomrule
@@ -259,7 +259,7 @@ constant so that it saturates as it does in the video configuration. The grid wa
 20 test seeds (100--119) after choices were fixed on seeds 0--3.
 
 \begin{table}[t]
-\caption{Study 1: mean delay per vehicle (s), 20 seeds, saturating density normaliser}
+\caption{Study 1: mean delay per vehicle (s), 20 seeds, physical density normaliser}
 \label{tab:study1}
 \centering
 \begin{tabular}{lccccc}
@@ -304,9 +304,7 @@ evaluated every step. Selection uses the base density with one additional term,
 \label{eq:barrier}
 \end{equation}
 where $D_i$ uses a common normaliser for all approaches (it is storage-blind, as in the
-base method) and $S_i$ is relative to the approach's own storage. The term is the
-reciprocal penalty of~\cite{mohajerpoor2023} divided by the link length and shifted to
-vanish for an empty approach; it is 0.76 at $S=0.5$ and 9.09 at $S=1$. Green time is
+base method) and $S_i$ is relative to the approach's own storage. The term uses the dimensionless reciprocal form of~\cite{mohajerpoor2023}, evaluated at the projected queue fraction and shifted to vanish for an empty approach; it is 0.76 at $S=0.5$ and 9.09 at $S=1$. Green time is
 actuated, with one addition (\emph{storage protection}): after 20\,s of green, the green
 ends if a waiting approach $j$ has
 \begin{equation}
