@@ -15,11 +15,10 @@
 
 \title{Vision-Measured Queue Tails for Storage-Aware Adaptive Traffic Signal Control}
 
-\author{\IEEEauthorblockN{Hemang Bhat}
-\IEEEauthorblockA{Netaji Subhas University of Technology\\
-New Delhi, India\\
-% TODO: add roll number / institute e-mail before submission
-}}
+\author{\IEEEauthorblockN{Hemang Bhat and Jatin}
+\IEEEauthorblockA{Hemang Bhat: 2024UCA1829 \quad Jatin: 2024UCA1865\\
+Netaji Subhas University of Technology\\
+New Delhi, India}}
 
 \maketitle
 
@@ -30,14 +29,11 @@ left, which is the quantity that spillback avoidance depends on. We measure the
 position of the queue tail directly from a single traffic camera using YOLOv8
 detections and ByteTrack identities: a stopped test normalised by each vehicle's own
 image size, and a contiguous chain of stopped vehicles followed back from the stop
-line along a drawn queue axis. On real footage the method cuts spurious stop events
-from 4.28 to 0.76 per vehicle. We then ask whether this measurement improves control,
+line along a drawn queue axis. In a cached YOLOv8n measurement audit, stop events fall from 4.28 to 0.76 per vehicle; this measures stability rather than labelled accuracy. We then ask whether this measurement improves control,
 using closed-loop simulation in SUMO with protocols fixed before the test runs. Added
-as a term in the selection score of a density-based controller, the queue tail changes
-mean delay by at most $\pm 0.5$\,s and alters the chosen approach in 1 of 40 inspected
-runs. Used instead as a storage limit on green time, following the spillback constraint
+as a term in the selection score of a density-based controller, the queue tail gives no statistically significant delay improvement and alters the chosen approach in 1 of 40 inspected runs. Used instead as a storage limit on green time, following the spillback constraint
 of Mohajerpoor \emph{et al.}, it reduces blocked-entry time by 20--26\% against actuated
-control near capacity with no significant change in delay, and on a junction with a
+control near capacity without an observed delay penalty, and on a junction with a
 short side street it outperforms a count-based version of the same rule. Beyond
 capacity the rule increases delay by 81--91\,s. We report both outcomes and the
 mechanism behind each.
@@ -70,8 +66,7 @@ helps. The contributions are:
 \item a calibration-free measurement of the queue tail from detections and tracks,
 with a perspective-normalised stopped test and a contiguous-chain definition of the
 queue (Section~\ref{sec:measure});
-\item a controlled negative result: used only to rank approaches, the measurement does
-not change the decisions of a density-based controller, and we explain why
+\item a controlled negative result: used only to rank approaches, the measurement rarely changes the decisions of a density-based controller, and we explain why
 (Section~\ref{sec:study1});
 \item a storage-aware rule that uses the measurement as a limit on green time, and an
 evaluation against fixed-time, actuated, capacity-aware max pressure and
@@ -104,11 +99,16 @@ scaled link length. Queue positions come from a shockwave model. They also note 
 the queue-formation regime spillback is often unavoidable and the constraint must be
 relaxed.
 
+\noindent Our extension is a camera-derived normalised queue position and a simple
+storage-triggered timing rule. It adapts the storage constraint idea
+from~\cite{mohajerpoor2023}; it does not reproduce their optimiser or establish
+superiority to FASC, Li's or Wei's methods.
+
 \subsection{Feedback control}
 Actuated control terminates a green when the detection zone has been empty for a passage
 time~\cite{stm2015}. Max pressure~\cite{varaiya2013} serves the phase with the largest
 queue differential and assumes unlimited storage; capacity-aware back-pressure
-\cite{gregoire2015} normalises by link capacity. Both are used here as baselines.
+\cite{gregoire2015} normalises by link capacity. The pressure baseline below uses a simplified capacity normalisation; it is not a reproduction of the cited network controller.
 
 \section{Queue-Tail Measurement}\label{sec:measure}
 Fig.~\ref{fig:flow} summarises the pipeline. Detection uses YOLOv8m~\cite{yolov8} with
@@ -131,10 +131,9 @@ bottom-centre of its box, the point where it meets the road surface. Its positio
 the approach is the arc length of the projection of that point onto the axis, divided
 by the axis length $L$:
 \begin{equation}
-p = \frac{(\mathbf{r}-\mathbf{a})\cdot\mathbf{u}}{L}\in[0,1],
+p = \frac{\ell_k+\operatorname{clip}_{[0,L_k]}((\mathbf{r}-\mathbf{a}_k)\cdot\mathbf{u}_k)}{L},
 \end{equation}
-where $\mathbf{a}$ is the stop-line end of the segment and $\mathbf{u}$ its unit
-direction. No camera calibration is required. The price is that $p$ is a fraction of
+where $k$ is the nearest segment, $\ell_k$ its starting arc length, $L_k$ its length and $\mathbf{u}_k$ its unit direction; hence $p\in[0,1]$. No camera calibration is required. The price is that $p$ is a fraction of
 the \emph{visible} approach and is not metric.
 
 \subsection{Stopped test}
@@ -144,12 +143,10 @@ box height $h$, is below a threshold:
 \frac{\lVert \mathbf{r}_t-\mathbf{r}_{t-1\,\mathrm{s}}\rVert}{h\cdot 1\,\mathrm{s}} < 0.2 .
 \end{equation}
 Dividing by $h$ compensates perspective: a distant vehicle covers few pixels per second
-even when moving. The one-second window averages out frame-to-frame box jitter. The
-threshold corresponds to roughly 1\,m/s for a passenger car.
+even when moving. The one-second window averages out frame-to-frame box jitter. This is an image-space heuristic, not a calibrated speed in m/s.
 
 \subsection{Queue tail and risk}
-Stopped vehicles are sorted by $p$. The queue is the chain that starts at a stopped
-vehicle inside the stop-line strip and continues while consecutive members are separated
+Stopped vehicles are sorted by $p$. The queue is the chain that starts inside the stop-line strip or within one gap allowance of the line, and continues while consecutive members are separated
 by at most two vehicle lengths, the length being the extent of the box along the local
 road direction, $|w u_x|+|h u_y|$. The queue tail $X$ is the position of the last member.
 An isolated stopped detection further upstream cannot set $X$.
@@ -169,15 +166,13 @@ $\dot Q=0$, so $F$ cannot indicate further growth; $X$ continues to change.
 
 \subsection{Evaluation on footage}
 We use three clips (107\,s, 240\,s, 240\,s; 30\,fps) of one intersection from the City
-of Bellevue traffic video dataset~\cite{bellevue}. Table~\ref{tab:measure} compares the
-initial implementation (stopped: less than 2\,px since the previous frame; tail: furthest
+of Bellevue traffic video dataset~\cite{bellevue}. Table~\ref{tab:measure} uses cached YOLOv8n tracks to compare the initial implementation (stopped: less than 2\,px since the previous frame; tail: furthest
 stopped vehicle) with the method above. The initial version registered 4.28 stop events
 per vehicle and moved $X$ by more than 0.3 of the approach between consecutive frames in
 up to 7.3\% of frames. With the robust stopped test alone, $X$ became almost always zero,
 which revealed that the original regions did not isolate inbound lanes or define a stop
 line. After redrawing the geometry, stop events fell to 0.76 per vehicle and large jumps
-to at most 1.1\% of frames. On the two longer clips the final method gives 0.57 and 0.56
-stops per vehicle. Fig.~\ref{fig:frame} shows one frame.
+to at most 1.1\% of frames. With YOLOv8m the busy clip gives 0.74 stops per vehicle, and the two longer clips give 0.57 and 0.56. Fig.~\ref{fig:frame} shows one frame.
 
 The footage is lightly loaded: the stop-line strip is full ($Q=1$) in at most 6\% of frames
 on any approach. The saturation of $Q$ and $F$ described above is therefore a property
@@ -185,7 +180,7 @@ of the definitions that these clips rarely exercise, and it is examined in simul
 instead.
 
 \begin{table}[t]
-\caption{Measurement on the busy clip (jump: $X$ changes by more than 0.3 between frames)}
+\caption{Measurement audit on the busy clip, YOLOv8n (jump: $X$ changes by more than 0.3 between frames)}
 \label{tab:measure}
 \centering
 \setlength{\tabcolsep}{3pt}
@@ -240,15 +235,10 @@ time removed the problem and is the actuated rule used below.
 
 We use SUMO~\cite{sumo} through libsumo with a 0.5\,s step. The junction has four
 two-lane approaches served one at a time with 3\,s yellow. A virtual camera computes
-$D$, $Q$, $X$ and $S$ from simulated positions and speeds using the same functions as
-the video pipeline; an optional noise model drops up to 30\% of distant vehicles and
-adds 2\,m position jitter. Arrivals are Poisson with 5\% heavy vehicles; each run has
-1800\,s of demand and the first 300\,s are discarded.
+$D$, $Q$, $X$ and $S$ from simulated positions and speeds. It shares the predictor with the video pipeline but uses a fixed chain gap of 0.25 of link length and instantaneous speed below 0.2 vehicle lengths/s, rather than box-scaled gaps and temporal tracking. Optional noise drops up to 30\% of distant vehicles and adds 2\,m position jitter; speeds remain exact and tracking errors are not modelled. Arrivals are Poisson with 5\% heavy vehicles; each run has 1800\,s of demand and up to 900\,s for draining. Delay includes vehicles scheduled after 300\,s; blocked-entry time covers the full run, including warm-up and draining.
 
 The primary measure is mean delay per vehicle (time loss plus the time waited to enter a
-full link). The secondary measure is blocked-entry time: seconds, summed over
-approaches, during which arrivals cannot enter because the queue has reached the
-upstream end. All methods run on the same seeds; we report paired differences with 95\%
+full link). The secondary measure is blocked-entry time: approach-seconds with pending SUMO insertions. It is a proxy for entry blockage and can include brief insertion conflicts rather than network spillback. All methods run on the same seeds; we report paired differences with 95\%
 $t$-intervals over 20 seeds. Design choices were made on separate validation seeds and
 the protocols were committed to the repository before the test seeds were run.
 
@@ -269,7 +259,7 @@ constant so that it saturates as it does in the video configuration. The grid wa
 20 test seeds (100--119) after choices were fixed on seeds 0--3.
 
 \begin{table}[t]
-\caption{Study 1: mean delay per vehicle (s), 20 seeds}
+\caption{Study 1: mean delay per vehicle (s), 20 seeds, saturating density normaliser}
 \label{tab:study1}
 \centering
 \begin{tabular}{lccccc}
@@ -289,10 +279,7 @@ Over-saturated & 147.6 & 148.2 & 140.0 & 116.8 & 120.1\\
 Table~\ref{tab:study1} gives representative results. The timing rule dominates: actuated
 timing roughly halves delay against fixed-time below capacity and reduces it from 300.6
 to 33.8\,s under unequal over-saturated demand, whereas band timing is worse than
-fixed-time in most scenarios because no green is shorter than 30\,s or ends early. The
-score composition does not matter: the paired difference S4$-$S3 is within $\pm0.1$\,s in
-eight scenarios and $+1.5\pm3.1$\,s in the ninth, and no comparison shows a significant
-improvement. A decision-level comparison on identical traffic found that adding $S$
+fixed-time in most scenarios because no green is shorter than 30\,s or ends early. With actuated timing and the saturating density normaliser, the paired difference S4$-$S3 is within $\pm0.1$\,s in eight scenarios and $+1.5\pm3.1$\,s in the ninth; none shows a significant improvement. A decision-level comparison on identical traffic found that adding $S$
 changed the approach served in 1 of 40 runs. The conclusions are the same for both
 density normalisers and with the camera noise model. Blocked-entry time is not reduced
 either: in the over-saturated scenario with actuated timing it is 4143\,s for S0, 3138\,s for S1 and
@@ -331,8 +318,7 @@ S_j\ge\beta=0.85 \quad\text{and}\quad S_j>S_{\mathrm{active}} .
 Two geometries are used: all approaches 150\,m, and a junction whose minor street
 (east/west) is 60\,m. Total demand is 1200, 1800, 2400, 3000 or 3600\,veh/h, split
 35/30/20/15\% between north, south, east and west. The methods are fixed-time (FT);
-actuated round-robin that skips empty approaches (ACT); capacity-aware max pressure with
-5\,s decisions (CMP)~\cite{gregoire2015}; Raza-style density with bands (RAZA); and an
+actuated round-robin that skips empty approaches (ACT); capacity-normalised pressure (CMP), checked every 5\,s after a 10\,s minimum green (60\,s maximum)~\cite{gregoire2015}; Raza-style density with bands (RAZA); and an
 ablation of the proposed controller: density with actuated timing (RAZA-A), plus the
 barrier of~\eqref{eq:barrier} (PROP-B), plus protection~\eqref{eq:protect} (PROP), and
 PROP with $S$ computed from the number of stopped vehicles divided by storage capacity
@@ -382,7 +368,7 @@ PROP, camera noise & 19.8 & 23.3 & 29.1 & 44.1 & 189.2 & 20.0 & 23.9 & 29.3 & 53
 Method & 2400 & 3000 & 3600 & 2400 & 3000 & 3600\\
 \midrule
 FT & 164 & 2172 & 4135 & 652 & 3093 & 5441\\
-ACT & 7 & 121 & 2136 & 97 & 945 & \best{4097}\\
+ACT & 7 & 120 & 2136 & 97 & 945 & \best{4097}\\
 CMP & \best{7} & 2442 & 6164 & \best{14} & 3343 & 6495\\
 RAZA & 785 & 2366 & 4195 & 1957 & 3347 & 5361\\
 RAZA-A & 7 & 132 & 2153 & 103 & 983 & 4160\\
@@ -417,12 +403,12 @@ ACT. This difference cannot be attributed to the storage term alone, because PRO
 selects by score and never serves the same approach twice in succession, and no arm
 separates these effects. At 3000\,veh/h, near capacity, PROP reduces blocked-entry time
 by $31.9\pm20.6$\,s ($-26\%$) on the uniform geometry and by $191.8\pm73.3$\,s ($-20\%$)
-on the short-minor geometry, with no significant change in delay.
+on the short-minor geometry. Delay is $1.3\pm0.9$\,s lower on the uniform geometry and $0.8\pm1.6$\,s higher on the short-minor geometry; only the former excludes zero.
 
 \emph{Effect of protection and of the measurement.} Relative to PROP-B, protection alone
 reduces blocked-entry time at 3000\,veh/h by $25.3\pm19.1$\,s and $229.2\pm70.3$\,s on the
 two geometries. Relative to PROP-CNT, the measured tail reduces it by a further
-$115.4\pm81.2$\,s on the short-minor geometry; elsewhere the two are equivalent.
+$115.4\pm81.2$\,s on the short-minor geometry; At 3600\,veh/h the count variant instead has less delay on both geometries.
 
 \emph{Beyond capacity.} At 3600\,veh/h PROP is worse than ACT by $90.9\pm9.8$\,s and
 $80.7\pm8.1$\,s of delay. Every approach is then close to full, some waiting approach
@@ -431,8 +417,8 @@ yellow interval, which lowers capacity further. This is the queue-formation regi
 which~\cite{mohajerpoor2023} relax the constraint.
 
 \emph{Other observations.} CMP has the lowest delay at light demand (about 2\,s below
-PROP) and the highest at 3000\,veh/h and above, where it switches every few seconds.
-With camera noise PROP is unchanged up to 2400\,veh/h; at 3000\,veh/h on the short-minor
+PROP) and the highest at 3000\,veh/h and above, under this implementation; this does not establish a general weakness of pressure control.
+With camera noise PROP has similar mean delay up to 2400\,veh/h; at 3000\,veh/h on the short-minor
 geometry blocked-entry time rises from 753 to 922\,s and delay from 46.4 to 53.7\,s, so
 most of the benefit over ACT is lost.
 
@@ -458,57 +444,51 @@ ACT & short-minor 3600 & $+80.7\pm8.1$ & $+229\pm137$\\
 \end{table}
 
 \section{Discussion and Limitations}
-The same measurement had no effect in the selection score and a measurable effect as a
+The spatial measure had no significant delay benefit in the selection score and a measurable effect as a
 timing constraint. In the score it is redundant with the count at the moment decisions
 are taken. As a constraint it acts between decisions and relative to each approach's
 storage, where the count carries no information. The comparison with PROP-CNT suggests
-the measured position matters when queues are long relative to the link, and that a
-count is sufficient otherwise.
+the measured position matters when queues are long relative to the link, without establishing superiority across demand regimes.
 
 Several limitations qualify these results. (i) The measurement is a fraction of the
 visible approach, is not metric, and underestimates queues on distant approaches where
 detections are missed; its accuracy has not been scored against hand-labelled queue ends.
 (ii) The control results come from simulation of a single isolated junction. An isolated
 junction charges spillback only as waiting time, whereas in a network a blocked link
-obstructs the upstream junction, so the benefit of reducing blocked-entry time is likely
-understated and remains to be measured on a corridor. (iii) The protection rule has no
+obstructs the upstream junction, so network effects remain to be measured on a corridor. (iii) The protection rule has no
 notion of regime; beyond capacity it is harmful. Detecting that all approaches are near
 full and relaxing $\beta$, as in~\cite{mohajerpoor2023}, is the natural correction.
 (iv) Thresholds and weights were set by hand or on a small validation set. (v) The
 footage is three short clips (587\,s in total) of one junction in daylight, and the
-simulated junction has straight-through movements and Poisson arrivals only. (vi) The base
-controller is Raza-style rather than a reproduction: bands are 30/45/60\,s instead of
+simulated junction has straight-through movements and Poisson arrivals only. (vi) Eight fixed-time runs at 3600\,veh/h have unfinished vehicles at the drain limit; their recorded losses are censored. (vii) The simplified sensor and pressure baseline limit transfer to deployed systems. (viii) The base controller is Raza-style rather than a reproduction: bands are 30/45/60\,s instead of
 40/60/120\,s and lane-priority weights are not used, because the camera's approaches are
 not separated by turning movement.
 
 \section{Conclusion}
 We presented a calibration-free method to measure the queue tail from a traffic camera
-and tested two ways of using it for signal control. As an additional ranking term it
-does nothing, for a reason that is structural rather than a matter of tuning. As a
-storage limit on green time it reduces local spillback by 20--26\% near capacity at no
-cost in delay, improves on a count-based equivalent when storage is short, and fails
+and tested two ways of using it for signal control. As an additional ranking term it rarely changes choices and gives no significant delay improvement in these tests. As a
+storage limit on green time it reduces local spillback by 20--26\% near capacity without an observed delay penalty, improves on a count-based equivalent when storage is short, and fails
 beyond capacity. Future work is a regime-aware version of the rule, a metric queue
 position through a ground-plane homography, better recall on distant approaches, and a
 multi-junction evaluation.
 
 \section*{Acknowledgment}
 The video data are from the City of Bellevue traffic video dataset. AI-assisted tools were
-used in developing the software, running the experiments and preparing the text; the
-author reviewed all results and is responsible for the content.
+used in developing the software, running the experiments and preparing the text; the authors are responsible for the content.
 
 \begin{thebibliography}{00}
 \bibitem{raza2025} M. Raza \emph{et al.}, ``An edge-deployed real-time adaptive traffic
 light control system using YOLO-based vehicle detection and PCE-aware density
-estimation,'' \emph{IEEE Access}, vol. 13, 2025, doi: 10.1109/ACCESS.2025.3602844.
+estimation,'' \emph{IEEE Access}, vol. 13, pp. 153586--153613, 2025, doi: 10.1109/ACCESS.2025.3602844.
 \bibitem{mohajerpoor2023} R. Mohajerpoor, C. Cai, and M. Ramezani, ``Optimal traffic
 signal control of isolated oversaturated intersections using predicted demand,''
-\emph{IEEE Trans. Intell. Transp. Syst.}, vol. 24, no. 1, pp. 815--826, Jan. 2023.
+\emph{IEEE Trans. Intell. Transp. Syst.}, vol. 24, no. 1, pp. 815--826, Jan. 2023, doi: 10.1109/TITS.2022.3209606.
 \bibitem{li2025} C. Li, Y. Lu, and H. Wang, ``A multi-objective model for traffic signal
 coordination control with queue profile estimation,'' \emph{IEEE Trans. Intell. Transp.
-Syst.}, vol. 26, no. 12, pp. 23389--23406, 2025.
-\bibitem{wei2025} Wei, Ampountolas, Hirrle, and Wang, ``Hierarchical predictive control
+Syst.}, vol. 26, no. 12, pp. 23389--23406, 2025, doi: 10.1109/TITS.2025.3616119.
+\bibitem{wei2025} L. Wei, K. Ampountolas, A. Hirrle, and M. Wang, ``Hierarchical predictive control
 of network traffic signals using link transmission model with queue dynamics,''
-\emph{IEEE Trans. Intell. Transp. Syst.}, vol. 26, no. 10, pp. 16391--16404, 2025.
+\emph{IEEE Trans. Intell. Transp. Syst.}, vol. 26, no. 10, pp. 16391--16404, 2025, doi: 10.1109/TITS.2025.3568869.
 \bibitem{stm2015} T. Urbanik \emph{et al.}, \emph{Signal Timing Manual}, 2nd ed., NCHRP
 Report 812. Washington, DC, USA: Transportation Research Board, 2015.
 \bibitem{varaiya2013} P. Varaiya, ``Max pressure control of a network of signalized

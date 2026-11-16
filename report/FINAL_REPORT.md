@@ -2,6 +2,16 @@
 
 *Computer Vision course project — final report*
 
+**Hemang Bhat — 2024UCA1829 · Jatin — 2024UCA1865**
+
+> The submission PDFs in `paper/` incorporate the final method and claim corrections.
+> Read [SUBMISSION_AUDIT.md](../docs/SUBMISSION_AUDIT.md) alongside this longer development
+> report. The simulation uses a simpler sensor than the final video pipeline; blocked-entry
+> time covers the full simulation, while vehicle delay excludes pre-300 s scheduled arrivals.
+> Claims of unchanged delay mean no observed penalty: the uniform 3000 veh/h comparison
+> actually shows a small significant reduction. The beyond-capacity count variant performs
+> better than PROP. These qualifications supersede broader wording below.
+
 ---
 
 ## Abstract

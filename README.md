@@ -1,6 +1,13 @@
 # Vision-Measured Queue Tails for Storage-Aware Adaptive Traffic Signal Control
 
-Computer Vision course project. A single traffic camera (YOLOv8 + ByteTrack) is used to
+Computer Vision course project, Netaji Subhas University of Technology.
+
+| Team member | Roll number |
+|---|---|
+| Hemang Bhat | 2024UCA1829 |
+| Jatin | 2024UCA1865 |
+
+ A single traffic camera (YOLOv8 + ByteTrack) is used to
 measure **where each queue ends** (queue tail X) and where it is heading (risk S). The
 measurement is then used in an adaptive signal controller built on the density-based
 method of **Raza et al. (2025)**, in two ways: as a term in the selection score, and,
@@ -8,8 +15,31 @@ following the spillback constraint of **Mohajerpoor et al. (IEEE T-ITS 2023)**, 
 storage limit on green time. Both are evaluated closed-loop in SUMO against fixed-time,
 actuated, capacity-aware max pressure and Raza-style control.
 
-**Paper (IEEE format):** [`paper/Vision_Measured_Queue_Tails_Paper.pdf`](paper/Vision_Measured_Queue_Tails_Paper.pdf)
- · LaTeX source [`paper/main.tex`](paper/main.tex)
+**Reports:** [Conference PDF](paper/Vision_Measured_Queue_Tails_Paper.pdf) · [Journal PDF](paper/Vision_Measured_Queue_Tails_Paper_journal.pdf) · [Overleaf ZIP](paper/overleaf_upload.zip)
+
+Both layouts contain the same report and both team members' roll numbers. The final
+storage-aware controller is `sim/study2.py` (PROP). The video command below demonstrates
+the measurement and Study 1 score; it does not run Study 2's storage-protection policy.
+
+## Improvement over the reference methods
+
+| Reference | What this project adds | Evidence and scope |
+|---|---|---|
+| Raza et al.: PCE-weighted counts and band-based green timing | A normalised queue-tail measurement, projected storage risk and actuated timing | Separates the timing benefit from the spatial measurement using RAZA-A, PROP-B and PROP-CNT ablations |
+| Mohajerpoor et al.: modelled queue position and optimised signal splits | A camera-derived storage state and a simple storage-triggered timing rule | Adapts their constraint idea; does not reproduce or outperform their FASC optimiser |
+| Count-based version of the proposed rule | Uses queue position relative to each approach's storage | At 3000 veh/h on the short-minor junction: 115.4 ± 81.2 fewer blocked-entry approach-seconds over 20 paired seeds |
+| Actuated round-robin | Score-based selection plus storage protection | At 3000 veh/h: about 26% and 20% less entry blockage for uniform and short-minor storage; fails beyond capacity |
+
+Control benefits are simulated. Video evaluation uses stability proxies and visual
+inspection; hand-labelled queue-tail accuracy has not been measured. The virtual
+sensor uses instantaneous simulated speeds and a fixed spatial gap, rather than the
+video pipeline's temporal stopped test and box-scaled gap. The pressure baseline is
+a simplified capacity-normalised implementation, not a reproduction.
+
+[Submission audit](docs/SUBMISSION_AUDIT.md) explains the corrections and limits.
+Run `python audit/verify_paper_results.py` to check the paper's numerical tables directly
+against the raw seed logs. [Build and test workflow](../../actions/workflows/submission-check.yml)
+rebuilds both reports and checks representative simulation replays.
 
 ```
 Existing paper (Raza) → limitation (count-only, storage-blind) → newer research
@@ -35,10 +65,10 @@ python -c "from sim.study2 import run, METHODS; r = run('short_minor_3000', METH
 
 ## The result in five points
 
-1. **The measurement works.** After three CV corrections (a perspective-normalised
+1. **The measurement is more stable.** After three CV corrections (a perspective-normalised
    stopped test, a contiguous queue tail, and recalibrated geometry with drawn stop-line
-   axes), the measured queue tail matches the visible queue wherever the detector sees the
-   vehicles (`report/queue_tail_validation.png`).
+   axes), visual inspection supports the measured queue tail where the detector sees the
+   vehicles; no labelled queue-tail accuracy is claimed (`report/queue_tail_validation.png`).
 2. **The earlier "+21% throughput" result was an artefact.** A weight-matched null control
    reproduces it exactly. On recorded video, "vehicles served" measures overlap with the
    *real* filmed signal, not control quality (`AUDIT_REPORT.md`).
@@ -53,7 +83,7 @@ python -c "from sim.study2 import run, METHODS; r = run('short_minor_3000', METH
 5. **Used in the green timing instead, the measurement helps near capacity.** Study 2
    (pre-registered, `sim/PROTOCOL_STUDY2.md`) adds a Mohajerpoor-style storage barrier and
    storage protection. At 3000 veh/h it cuts local spillback by 20–26% against actuated
-   control at no delay cost; on a junction with a 60 m side street the camera's spatial
+   control without an observed delay penalty; on a junction with a 60 m side street the camera's spatial
    measure beats a stopped-vehicle count. Beyond capacity the protection rule fails
    (delay roughly doubles). `report/RESEARCH_PRESENTATION.md` has the full results.
 
