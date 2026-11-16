@@ -176,7 +176,13 @@ per vehicle and moved $X$ by more than 0.3 of the approach between consecutive f
 up to 7.3\% of frames. With the robust stopped test alone, $X$ became almost always zero,
 which revealed that the original regions did not isolate inbound lanes or define a stop
 line. After redrawing the geometry, stop events fell to 0.76 per vehicle and large jumps
-to at most 1.1\% of frames. Fig.~\ref{fig:frame} shows one frame.
+to at most 1.1\% of frames. On the two longer clips the final method gives 0.57 and 0.56
+stops per vehicle. Fig.~\ref{fig:frame} shows one frame.
+
+The footage is lightly loaded: the stop-line strip is full ($Q=1$) in at most 6\% of frames
+on any approach. The saturation of $Q$ and $F$ described above is therefore a property
+of the definitions that these clips rarely exercise, and it is examined in simulation
+instead.
 
 \begin{table}[t]
 \caption{Measurement on the busy clip (jump: $X$ changes by more than 0.3 between frames)}
@@ -209,7 +215,8 @@ Two limits remain. Detector recall falls with distance: on a test frame YOLOv8m 
 of about 9 queued vehicles on the far north approach (YOLOv8n found 2), so $X$ is
 underestimated there. And we have no hand-labelled queue ends, so accuracy is supported
 by the proxies in Table~\ref{tab:measure} and visual inspection rather than by an error
-against ground truth.
+against ground truth. The regions and axes are drawn by hand for this camera and would
+have to be redrawn for another.
 
 \section{Evaluation Method}
 Recorded vehicles follow the signal that was filmed, so footage cannot show the effect of
@@ -217,7 +224,19 @@ a different controller. An earlier open-loop comparison on the clips reported 21
 vehicles served with the risk term; a control with the term set to zero and the same
 weights reproduced the figure exactly, and the count of ``served'' vehicles was found to
 measure overlap between the simulated green and the real one. Control is therefore
-evaluated only in closed loop.
+evaluated only in closed loop. The footage is still useful for one check that does not
+depend on vehicle response: replaying identical tracks through each controller shows
+which approach it would serve. On all three clips the controller with the risk term
+serves the same approach as the controller without it at every green.
+
+Several other extensions of the base controller were tried on the footage before the
+closed-loop study and were not retained: a PCE-weighted queue (no effect, the traffic
+is almost all cars), a count of vehicles stopped beyond the strip as a score term (no
+consistent effect), a discharge-limited green time derived from the measured queue
+(worse at this short region length), and a switching margin with a green-rate limit
+(mixed). Ending the green as soon as the strip emptied also gave mixed results, because
+greens were cut during discharge; requiring the strip to stay empty for a 2\,s passage
+time removed the problem and is the actuated rule used below.
 
 We use SUMO~\cite{sumo} through libsumo with a 0.5\,s step. The junction has four
 two-lane approaches served one at a time with 3\,s yellow. A virtual camera computes
@@ -243,7 +262,11 @@ fixed-time (S0), actuated round-robin (A0), density only (S1), density and queue
 plus count forecast (S3), S4, a null arm with S4's weights and $S\equiv 0$, and arms that
 substitute $X$ or $S$ for $F$. Each score-based arm is run with band timing
 (30/45/60\,s by score) and with actuated timing (10--60\,s, ended after the strip has been
-empty for 2\,s), on nine demand scenarios from light to beyond capacity.
+empty for 2\,s), on nine demand scenarios from light to beyond capacity; one scenario
+takes its per-approach demand shares from the vehicle counts measured on the footage.
+Density is normalised either by the storage capacity of the approach, or by a small
+constant so that it saturates as it does in the video configuration. The grid was run on
+20 test seeds (100--119) after choices were fixed on seeds 0--3.
 
 \begin{table}[t]
 \caption{Study 1: mean delay per vehicle (s), 20 seeds}
@@ -270,7 +293,10 @@ fixed-time in most scenarios because no green is shorter than 30\,s or ends earl
 score composition does not matter: the paired difference S4$-$S3 is within $\pm0.1$\,s in
 eight scenarios and $+1.5\pm3.1$\,s in the ninth, and no comparison shows a significant
 improvement. A decision-level comparison on identical traffic found that adding $S$
-changed the approach served in 1 of 40 runs.
+changed the approach served in 1 of 40 runs. The conclusions are the same for both
+density normalisers and with the camera noise model. Blocked-entry time is not reduced
+either: in the over-saturated scenario with actuated timing it is 4143\,s for S0, 3138\,s for S1 and
+$3251\pm317$\,s for S4.
 
 Two mechanisms explain this. First, a decision is taken when a green ends; every other
 approach has been red and is accumulating a queue, and the approach with the longest
@@ -448,7 +474,12 @@ obstructs the upstream junction, so the benefit of reducing blocked-entry time i
 understated and remains to be measured on a corridor. (iii) The protection rule has no
 notion of regime; beyond capacity it is harmful. Detecting that all approaches are near
 full and relaxing $\beta$, as in~\cite{mohajerpoor2023}, is the natural correction.
-(iv) Thresholds and weights were set by hand or on a small validation set.
+(iv) Thresholds and weights were set by hand or on a small validation set. (v) The
+footage is three short clips (587\,s in total) of one junction in daylight, and the
+simulated junction has straight-through movements and Poisson arrivals only. (vi) The base
+controller is Raza-style rather than a reproduction: bands are 30/45/60\,s instead of
+40/60/120\,s and lane-priority weights are not used, because the camera's approaches are
+not separated by turning movement.
 
 \section{Conclusion}
 We presented a calibration-free method to measure the queue tail from a traffic camera
