@@ -8,7 +8,6 @@ The same report in two IEEEtran layouts:
 | Journal | `main_journal.tex` | [Journal report](Vision_Measured_Queue_Tails_Paper_journal.pdf) |
 
 Authors: **Hemang Bhat (2024UCA1829)** and **Jatin (2024UCA1865)**, NSUT.
-No email address has been guessed.
 
 ## Overleaf
 
@@ -29,7 +28,7 @@ pdflatex -interaction=nonstopmode -halt-on-error main_journal.tex
 pdflatex -interaction=nonstopmode -halt-on-error main_journal.tex
 ```
 
-The [submission workflow](../../../actions/workflows/submission-check.yml) runs the
+The [submission workflow](https://github.com/hemangbhat/CV_Project/actions/workflows/submission-check.yml) runs the
 tests, verifies tables against the raw logs, replays representative SUMO runs, compiles
 both layouts and rebuilds the two PDFs and the ZIP together.
 

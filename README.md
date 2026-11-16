@@ -38,7 +38,7 @@ a simplified capacity-normalised implementation, not a reproduction.
 
 [Submission audit](docs/SUBMISSION_AUDIT.md) explains the corrections and limits.
 Run `python audit/verify_paper_results.py` to check the paper's numerical tables directly
-against the raw seed logs. [Build and test workflow](../../actions/workflows/submission-check.yml)
+against the raw seed logs. [Build and test workflow](https://github.com/hemangbhat/CV_Project/actions/workflows/submission-check.yml)
 rebuilds both reports and checks representative simulation replays.
 
 ```

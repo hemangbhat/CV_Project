@@ -21,7 +21,7 @@ permissions:
 
 concurrency:
   group: submission-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate-and-build:
@@ -51,7 +51,7 @@ jobs:
       - name: Install report compiler
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends texlive-latex-extra texlive-fonts-recommended poppler-utils
+          sudo apt-get install -y --no-install-recommends texlive-latex-extra texlive-publishers texlive-fonts-recommended poppler-utils
       - name: Compile both layouts
         working-directory: paper
         run: |
