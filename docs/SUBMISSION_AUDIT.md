@@ -66,6 +66,6 @@ The replay check does not rerun the complete experimental grid.
 
 The AI-assistance acknowledgment and repository history remain intact. No contribution
 split, email address, unperformed experiment or human-only authorship is invented.
-Study notes remain available for learning and are not evidence that a result was
-independently reproduced. The authors should read both reports and be able to explain
+Redundant presentation scripts, viva answers and study guides were removed from the
+submission tree. The authors should read both reports and be able to explain
 the implementation, ablations and limitations before submission.

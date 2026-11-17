@@ -38,7 +38,7 @@ remaining time, and §8 is the plan.
   **Adding X or S does not measurably improve delay, spillback or throughput** in any of 9
   scenarios. Adding S changed the green choice in 1 of 40 inspected runs. The actuated
   green-time rule is the largest effect in the study.
-* Full write-up: `report/FINAL_REPORT.md`. Viva answers: `docs/VIVA_QA.md`.
+* Full write-up: `report/FINAL_REPORT.md`.
 
 ---
 

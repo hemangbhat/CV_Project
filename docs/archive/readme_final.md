@@ -1324,7 +1324,6 @@ forecast visible on screen.
 | Explain the whole project | **This file** |
 443
 +
-| Show slides | `report/RESULTS_HIGHLIGHTS.md` + the 3 graphs |
 444
 +
 | Show the paper limitation analysis | `report/paper_limitations_analysis.md` |

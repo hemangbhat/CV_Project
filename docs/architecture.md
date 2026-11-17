@@ -80,7 +80,6 @@ records that frame as `selection_score_frame`.
 | Study 2: storage-aware methods and runner | `sim/study2.py`, `sim/PROTOCOL_STUDY2.md` | 8 methods, 2 geometries × 5 demand levels, own signal loop |
 | Study 2 tables and figures | `sim/study2_figures.py` | `results/sim/study2/`, `report/figures/study2/` |
 | Presentation diagrams | `scripts/make_presentation_figures.py` | taxonomy, workflow, method flow |
-| Combined document | `scripts/build_complete_doc.py` | builds `COMPLETE_PROJECT_DOCUMENT.md` |
 
 ## Study 2 path
 

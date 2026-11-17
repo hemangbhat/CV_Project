@@ -7,7 +7,7 @@ Computer Vision course project, Netaji Subhas University of Technology.
 | Hemang Bhat | 2024UCA1829 |
 | Jatin | 2024UCA1865 |
 
- A single traffic camera (YOLOv8 + ByteTrack) is used to
+A single traffic camera (YOLOv8 + ByteTrack) is used to
 measure **where each queue ends** (queue tail X) and where it is heading (risk S). The
 measurement is then used in an adaptive signal controller built on the density-based
 method of **Raza et al. (2025)**, in two ways: as a term in the selection score, and,
@@ -101,7 +101,7 @@ python -c "from sim.study2 import run, METHODS; r = run('short_minor_3000', METH
 | [`sim/PROTOCOL.md`](sim/PROTOCOL.md), [`sim/PROTOCOL_STUDY2.md`](sim/PROTOCOL_STUDY2.md) | The two experiment protocols, fixed before the test runs |
 | [`results/sim/study2/tables.md`](results/sim/study2/tables.md) | Full study 2 result tables (regenerate with `python -m sim.study2_figures`) |
 | [`docs/research/`](docs/research/), [`docs/papers/`](docs/papers/) | Literature review, limitation analysis, and verified facts from the papers |
-| [`docs/README.md`](docs/README.md) | Index of the remaining notes (glossary, study guide, question bank) |
+| [`docs/README.md`](docs/README.md) | Index of technical documentation and experiment evidence |
 | [`docs/archive/`](docs/archive/) | Earlier documents, kept for the record; their headline results are superseded |
 
 ## Repository map

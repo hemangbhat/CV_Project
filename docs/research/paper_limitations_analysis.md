@@ -1,6 +1,6 @@
 > **Status (Oct 2026):** the literature analysis below remains valid. Statements in it about this project's *measured results* are superseded by `report/FINAL_REPORT.md` (see `AUDIT_REPORT.md`).
 >
-> **Final enhancement (study 2):** the project's final enhancement builds on a third T-ITS paper, Mohajerpoor et al. 2023, summarised with its limitations in `docs/research/paper_limitations_analysis.md` §7. Its results are in `report/RESEARCH_PRESENTATION.md` §10 C3; how to explain them is in `docs/EXPLAIN_TO_PROFESSOR.md`.
+> **Final enhancement (study 2):** the project's final enhancement builds on a third T-ITS paper, Mohajerpoor et al. 2023, summarised with its limitations in `docs/research/paper_limitations_analysis.md` §7. Its results are in `report/RESEARCH_PRESENTATION.md` §10 C3. Implementation details are in `docs/TECHNICAL_GUIDE.md`.
 
 # Limitation Analysis of the Two Selected IEEE TITS Papers, and What This Project Takes From Them
 
